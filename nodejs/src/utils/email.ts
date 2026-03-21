@@ -1,7 +1,34 @@
 import { Resend } from 'resend';
 import LogService from "../utils/log";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 单例实例
+let resendInstance: Resend | null = null;
+let isInitialized = false;
+
+// 懒加载初始化函数
+function getResendClient(): Resend | null {
+  if (isInitialized) {
+    return resendInstance;
+  }
+  
+  const apiKey = process.env.RESEND_API_KEY;
+  
+  if (!apiKey) {
+    LogService.warn('RESEND_API_KEY 未配置，邮件服务不可用');
+    isInitialized = true;
+    return null;
+  }
+  
+  resendInstance = new Resend(apiKey);
+  isInitialized = true;
+  LogService.info('Resend 客户端初始化成功');
+  return resendInstance;
+}
+
+// 服务可用性检查
+export function isEmailServiceAvailable(): boolean {
+  return getResendClient() !== null;
+}
 
 export async function sendCommentReplyNotification({
   toEmail,
@@ -20,8 +47,15 @@ export async function sendCommentReplyNotification({
   replyContent: string;
   postUrl: string;
 }) {
+  const resend = getResendClient();
+  
+  if (!resend) {
+    LogService.warn('邮件发送跳过：服务未初始化');
+    return null;
+  }
+
   const { data, error } = await resend.emails.send({
-    from: `评论通知 ${process.env.RESEND_FROM_EMAIL}`, // 替换为你验证过的域名邮箱
+    from: `评论通知 ${process.env.RESEND_FROM_EMAIL}`,
     to: toEmail,
     subject: `你在 blog.motues.top 上的评论有了新回复`,
     html: `
@@ -46,12 +80,10 @@ export async function sendCommentReplyNotification({
   });
 
   if (error) {
-    // console.error('邮件发送失败:', error);
     LogService.error('邮件发送失败:', error);
     throw new Error('Failed to send email');
   }
 
-  // console.log('邮件已发送:', data.id);
   LogService.info('邮件已发送:', data.id);
   return data;
 }
@@ -66,9 +98,16 @@ export async function sendCommentNotification({
   postUrl: string;
   commentAuthor: string;
   commentContent: string;
-}) { 
+}) {
+  const resend = getResendClient();
+  
+  if (!resend) {
+    LogService.warn('邮件发送跳过：服务未初始化');
+    return null;
+  }
+  
   const { data, error } = await resend.emails.send({
-    from: `评论通知 ${process.env.RESEND_FROM_EMAIL}`, // 替换为你验证过的域名邮箱
+    from: `评论通知 ${process.env.RESEND_FROM_EMAIL}`,
     to: process.env.EMAIL_ADDRESS as string,
     subject: `你在 blog.motues.top 上有新的评论`,
     html: `
@@ -89,12 +128,10 @@ export async function sendCommentNotification({
   });
 
   if (error) {
-    // console.error('邮件发送失败:', error);
     LogService.error('邮件发送失败:', error);
     throw new Error('Failed to send email');
   }
 
-  // console.log('邮件已发送:', data.id);
   LogService.info('邮件已发送:', data.id);
   return data;
 }
