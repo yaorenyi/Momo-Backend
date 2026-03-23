@@ -57,7 +57,11 @@
 
   <div class="comment-main">
     <div class="comment-header">
+      {#if c.url}
+        <a href={c.url} target="_blank" class="comment-author author-link">{c.author}</a>
+      {:else}
       <span class="comment-author">{c.author}</span>
+      {/if}
       <span class="comment-date">{formatFullDate(new Date(c.pubDate), language)}</span>
     </div>
 
@@ -181,7 +185,7 @@
 }
 
 .comment-avatar {
-  border-radius: 0.25rem;
+  border-radius: 50%;
   object-fit: cover;
 }
 
@@ -199,6 +203,15 @@
 .comment-author {
   font-weight: 600;
   color: var(--text-color);
+}
+
+.author-link {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.author-link:hover {
+  color: var(--link-color);
 }
 
 .comment-date {
@@ -241,6 +254,7 @@
 }
 
 .action-link {
+  font-family: inherit;
   background: none;
   border: none;
   padding: 0;
@@ -330,6 +344,7 @@
   border-radius: 0.25rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
+  font-family: inherit;
   border: 1px solid var(--button-border-color);
   background: transparent;
   color: var(--text-color);

@@ -324,6 +324,7 @@
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
+  font-family: inherit;
   color: var(--text-color);
   border: 1px solid var(--button-border-color);
   background: transparent;
