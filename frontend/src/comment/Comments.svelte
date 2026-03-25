@@ -70,8 +70,8 @@
       );
       if (!res.ok) throw new Error(t('comments.loadFailed'));
       const data = await res.json();
-      comments = data.data;
-      hasMore = data.pagination.total > page * limit;
+      comments = data.data.comments;
+      hasMore = data.data.pagination.totalPage > page;
     } catch (err: any) {
       error = err.message;
     } finally {

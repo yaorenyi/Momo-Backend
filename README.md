@@ -50,11 +50,9 @@ Momo Backend 包含前端部署和服务器部署两个模块：
 
 ## TODO
 
-- [ ] 规范 API 接口
-- [ ] 使用 Go 重构新的版本（提高速度，降低资源占用）
-- [ ] 提供统一，便捷的前端接口
 - [ ] 提供 Docker 一键部署
 - [ ] 完善文档
+
 
 > 欢迎对本仓库提出建议，进行优化
 > Made with ❤️ by [Motues](https://github.com/Motues)

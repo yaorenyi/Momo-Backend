@@ -12,12 +12,15 @@ interface Comment {
 interface Pagination {
   page: number;
   limit: number;
-  total: number;
+  totalPage: number;
 }
 
 interface CommentsResponse {
-  data: Comment[];
-  pagination: Pagination;
+  code: number;
+  data: {
+    comments: Comment[];
+    pagination: Pagination;
+  }
 }
 
 interface NestedComment {
@@ -31,24 +34,35 @@ interface NestedComment {
 }
 
 interface NestedCommentsResponse {
-  data: NestedComment[];
-  pagination: Pagination;
+  code: number;
+  message: string;
+  data: {
+    comments: NestedComment[];
+    pagination: Pagination;
+  }
 }
 
 interface CommentAdmin {
   id: number;
   pubDate: string;
+  postSlug: string;
   author: string;
   email: string;
   url?: string;
   ipAddress: string;
+  os: string;
+  browser: string;
   contentText: string;
   contentHtml: string;
   status: string;
 }
 interface CommentAdminResponse {
-  data: CommentAdmin[];
-  pagination: Pagination;
+  code: number;
+  message: string;
+  data: {
+    comments: CommentAdmin[];
+    pagination: Pagination;
+  }
 }
 
 export type { CommentsResponse, NestedCommentsResponse, NestedComment, Comment, CommentAdmin, CommentAdminResponse };

@@ -17,24 +17,31 @@ export const listComments = async (c: Context<{ Bindings: Bindings }>) => {
   ).bind(limit, offset).all();
 
   // 3. 映射字段名以符合你的 API 规范
-  const data = results.map((row: any) => ({
+  const comments = results.map((row: any) => ({
     id: row.id,
     pubDate: row.pub_date,
+    postSlug: row.post_slug,
     author: row.author,
     email: row.email,
     url: row.url,
     ipAddress: row.ip_address,
+    os: row.os,
+    browser: row.browser,
     contentText: row.content_text,
     contentHtml: row.content_html,
     status: row.status
   }));
 
   return c.json({
-    data,
-    pagination: {
-      page,
-      limit,
-      total: Math.ceil((totalCount?. count || 0) / limit)
+    code: 200,
+    message: 'Comments fetched successfully',
+    data: {
+      comments: comments,
+      pagination: {
+        page,
+        limit,
+        totalPage: Math.ceil((totalCount?. count || 0) / limit)
+      }
     }
   });
 };

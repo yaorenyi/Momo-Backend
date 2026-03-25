@@ -1,0 +1,250 @@
+package http
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"momo-backend-go/internal/model"
+	"momo-backend-go/internal/pkg/utils"
+	"momo-backend-go/internal/repository"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ua-parser/uap-go/uaparser"
+)
+
+type CommentHandler struct {
+	Repo     repository.CommentRepository
+	UAParser *uaparser.Parser
+}
+
+// PostComment 提交评论 (POST /api/comments)
+func (h *CommentHandler) PostComment(c *gin.Context) {
+	var req model.CommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	// 1. 获取并解析 User-Agent
+	uaString := c.GetHeader("User-Agent")
+	var deviceStr, browserStr string
+
+	if h.UAParser != nil && uaString != "" {
+		client := h.UAParser.Parse(uaString)
+		// 拼接设备信息：例如 "Windows 10" 或 "iPhone"
+		deviceStr = fmt.Sprintf("%s %s", client.Os.Family, client.Os.Major)
+		// 拼接浏览器信息：例如 "Chrome 122.0"
+		browserStr = fmt.Sprintf("%s %s", client.UserAgent.Family, client.UserAgent.Major)
+	}
+
+	// 2. 构造数据库模型
+	comment := &model.Comment{
+		PostSlug: req.PostSlug,
+		Author:   req.Author,
+		Email:    req.Email,
+		URL: func() *string {
+			if req.URL != "" {
+				return &req.URL
+			} else {
+				return nil
+			}
+		}(),
+		PubDate:     time.Now().UnixMilli(),
+		ContentText: req.Content,
+		ContentHTML: req.Content, // 建议：此处可接入 blackfriday 等库转 HTML
+		ParentID:    req.ParentID,
+		IPAddress:   ptrString(utils.GetClientIP(c)),
+		Device:      ptrString(deviceStr),
+		Browser:     ptrString(browserStr),
+		Status:      "approved",
+	}
+
+	// 3. 写入数据库
+	if err := h.Repo.Create(c.Request.Context(), comment); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "存储失败",
+		})
+		return
+	}
+
+	// 发送邮件通知
+
+	if utils.GetService().IsAvailable() {
+		go func() {
+			// 创建独立的 context，避免受 HTTP 请求生命周期影响
+			ctx := context.Background()
+
+			if req.ParentID != nil {
+				parentComment, err := h.Repo.GetByID(ctx, *req.ParentID)
+				fmt.Printf("Parent Comment: %+v\n", parentComment)
+				if err != nil {
+					log.Printf("Failed to fetch parent comment: %v", err)
+					return
+				}
+				if parentComment.Email != req.Email {
+					_, err = utils.GetService().SendCommentReplyNotification(
+						parentComment.Email,
+						parentComment.Author,
+						req.PostTitle,
+						parentComment.ContentText,
+						req.Author,
+						req.Content,
+						req.PostURL,
+					)
+					if err != nil {
+						log.Printf("Failed to send reply notification: %v", err)
+					} else {
+						log.Printf("Reply notification sent to %s", parentComment.Email)
+					}
+				}
+			} else {
+				_, err := utils.GetService().SendCommentNotification(
+					req.PostTitle,
+					req.PostURL,
+					req.Author,
+					req.Content,
+				)
+				if err != nil {
+					log.Printf("Failed to send admin notification: %v", err)
+				} else {
+					log.Printf("Admin notification sent")
+				}
+			}
+		}()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Comment submitted",
+	})
+}
+
+func (h *CommentHandler) GetComments(c *gin.Context) {
+	slug := c.Query("post_slug")
+	if slug == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "post_slug is required"})
+		return
+	}
+
+	// 参数解析与限流
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	nested := c.DefaultQuery("nested", "true") != "false" // 默认 true
+
+	if limit > 50 {
+		limit = 50
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	if page < 1 {
+		page = 1
+	}
+
+	// 1. 从 Repo 获取所有已审核评论 (status = 'approved')
+	// 注意：如果是嵌套模式，通常需要查出所有评论来构建树；
+	// 如果是非嵌套模式，可以直接在 SQL 层做分页。
+	allComments, err := h.Repo.GetByPostSlug(c.Request.Context(), slug)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "查询失败"})
+		return
+	}
+
+	// 2. 转换为 Response 格式并处理头像
+	var allResponses []*model.CommentResponse
+	for _, comm := range allComments {
+		res := &model.CommentResponse{
+			ID:          comm.ID,
+			Author:      comm.Author,
+			URL:         comm.URL,
+			Avatar:      utils.GetCravatar(comm.Email),
+			ContentText: comm.ContentText,
+			ContentHTML: comm.ContentHTML,
+			PubDate:     time.UnixMilli(comm.PubDate).UTC().Format("2006-01-02T15:04:05.000Z"),
+			ParentID:    comm.ParentID,
+			Replies:     []*model.CommentResponse{}, // 初始化空切片避免返回 null
+		}
+		allResponses = append(allResponses, res)
+	}
+
+	var result []*model.CommentResponse = make([]*model.CommentResponse, 0)
+	var total int
+
+	// 3. 根据是否嵌套进行逻辑处理
+	if nested {
+		// 嵌套模式：构建树并对顶级评论分页
+		tree := buildCommentTree(allResponses)
+		total = len(tree)
+
+		// 对根节点进行物理分页
+		start, end := slicePagination(total, page, limit)
+		result = tree[start:end]
+	} else {
+		// 非嵌套模式：直接分页
+		total = len(allResponses)
+		start, end := slicePagination(total, page, limit)
+		result = allResponses[start:end]
+	}
+
+	if result == nil {
+		result = make([]*model.CommentResponse, 0)
+	}
+
+	// 4. 返回响应
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Comments fetched successfully",
+		"data": gin.H{
+			"comments": result,
+			"pagination": gin.H{
+				"page":      page,
+				"limit":     limit,
+				"totalPage": (total + limit - 1) / limit,
+			},
+		},
+	})
+}
+
+func ptrString(s string) *string { return &s }
+
+func buildCommentTree(comments []*model.CommentResponse) []*model.CommentResponse {
+	nodes := make(map[int64]*model.CommentResponse)
+	var roots []*model.CommentResponse
+
+	// 首先映射所有节点
+	for _, c := range comments {
+		nodes[c.ID] = c
+	}
+
+	// 构建父子关系
+	for _, c := range comments {
+		if c.ParentID != nil {
+			if parent, ok := nodes[*c.ParentID]; ok {
+				parent.Replies = append(parent.Replies, c)
+				continue
+			}
+		}
+		// 如果没有父节点或父节点不在列表中，则视为根评论
+		roots = append(roots, c)
+	}
+	return roots
+}
+
+func slicePagination(total, page, limit int) (int, int) {
+	start := (page - 1) * limit
+	if start > total {
+		return total, total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	return start, end
+}

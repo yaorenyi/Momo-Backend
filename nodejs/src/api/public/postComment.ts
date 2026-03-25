@@ -14,7 +14,8 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
   // 检查评论时间
   if(!await canPostComment(ip)) {
     ctx.body = {
-      message: "Time limit exceeded. Please wait before posting again."
+      code: 400,
+      message: "Time limit exceeded"
     };
     return; 
   }
@@ -66,6 +67,7 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
       }
     }
     ctx.body = {
-      message: "Comment submitted. Awaiting moderation."
+      code: 200,
+      message: "Comment submitted successfully",
     };
 }

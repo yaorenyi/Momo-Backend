@@ -32,11 +32,17 @@ export const adminLogin = async (c: Context<{ Bindings: Bindings }>) => {
       // 达到上限，封禁 30 分钟
       await c.env.MOMO_AUTH_KV.put(blockKey, "1", { expirationTtl: LOCK_TIME });
       await c.env.MOMO_AUTH_KV.delete(attemptKey); // 清除尝试计数
-      return c.json({ message: "IP is blocked due to multiple failed login attempts" }, 403);
+      return c.json({ 
+        code: 400,
+        message: "IP is blocked due to multiple failed login"
+      }, 403);
     } else {
       // 记录失败次数，设置 10 分钟内连续失败才计数
       await c.env.MOMO_AUTH_KV.put(attemptKey, attempts.toString(), { expirationTtl: 600 });
-      return c.json({ message: "Invalid username or password", failedAttempts: attempts }, 401);
+      return c.json({ 
+        code: 400,
+        message: "Invalid username or password",
+        }, 401);
     }
   }
 
@@ -46,14 +52,16 @@ export const adminLogin = async (c: Context<{ Bindings: Bindings }>) => {
   // 生成 Token (你的 tempKey)
   const tempKey = crypto.randomUUID();
   
-  // 将 Token 存入 KV，有效期 10 分钟 (600秒)
+  // 将 Token 存入 KV，有效期 20 分钟 (1200秒)
   // 我们存入一个对象，包含用户名和登录 IP，增加安全性
   await c.env.MOMO_AUTH_KV.put(`token:${tempKey}`, JSON.stringify({
     user: data.name,
     ip: ip
-  }), { expirationTtl: 600 });
+  }), { expirationTtl: 1200 });
 
   return c.json({
-    data: { key: tempKey }
+      code: 200,
+      message: "Login successful",
+      token: tempKey
   });
 };

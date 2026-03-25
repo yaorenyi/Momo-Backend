@@ -1,0 +1,101 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"momo-backend-go/internal/config"
+	h "momo-backend-go/internal/handler/http"
+	"momo-backend-go/internal/repository/sqlite"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
+	_ "modernc.org/sqlite"
+)
+
+func main() {
+	// 1. 加载配置
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("无法加载配置: %v", err)
+	}
+
+	// 2. 准备数据库环境
+	dbPath := "./data/data.db"
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		log.Fatalf("无法创建数据库目录: %v", err)
+	}
+
+	// 3. 连接数据库并初始化表结构
+	db, err := sqlx.Connect("sqlite", dbPath)
+	if err != nil {
+		log.Fatalf("数据库连接失败: %v", err)
+	}
+	if err := sqlite.InitSchema(db); err != nil {
+		log.Fatalf("初始化表结构失败: %v", err)
+	}
+
+	// 4. 初始化 Repository 和 Handler
+	repo := sqlite.NewCommentRepository(db)
+	handler := &h.CommentHandler{Repo: repo}
+
+	// 5. 设置 Gin 引擎
+	r := gin.Default()
+
+	// 全局中间件：跨域处理
+	r.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		allowOrigins := strings.Split(cfg.AllowOrigin, ",")
+
+		isAllowed := false
+		for _, o := range allowOrigins {
+			if strings.TrimSpace(o) == origin {
+				isAllowed = true
+				break
+			}
+		}
+
+		if isAllowed {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		}
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		c.Next()
+	})
+
+	// 6. 注册路由
+	h.RegisterRoutes(r, handler)
+
+	// 只要访问 /admin 及其子路径，都尝试返回前端页面
+	// 假设你的管理后台打包后放在 ./dist 目录下
+	r.Static("/assets", "./public/assets") // 如果打包后的资源路径有前缀
+
+	// 如果你的前端管理页面是完全独立的单页应用
+	r.NoRoute(func(c *gin.Context) {
+		// 只有非 API 请求才返回 index.html
+		path := c.Request.URL.Path
+		if !strings.HasPrefix(path, "/api") && !strings.HasPrefix(path, "/admin") {
+			c.File("./public/index.html")
+		}
+	})
+
+	// 7. 启动服务器
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	fmt.Printf("--- 评论系统后端已启动 ---\n")
+	fmt.Printf("监听地址: %s\n", addr)
+	fmt.Printf("数据库路径: %s\n", dbPath)
+	fmt.Printf("管理员名称: %s\n", cfg.AdminName)
+
+	if err := r.Run(addr); err != nil {
+		log.Fatalf("服务器启动失败: %v", err)
+	}
+}

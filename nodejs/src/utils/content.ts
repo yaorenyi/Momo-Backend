@@ -8,18 +8,26 @@ import { getAvatar } from "../utils/getAvatar";
 const getResponseComment = 
 async (comments: Comment[] | null, page: number, limit: number, nested: boolean): Promise<CommentsResponse | NestedCommentsResponse> => {
   if(comments === null) {
-    return { data: [], pagination: { page, limit, total: 0 } };
+    return { 
+      code: 200,
+      message: "Comments fetched successfully",
+      data: { comments: [], pagination: { page, limit, totalPage: 0 } }
+    };
   }
   if (nested) {
     // 构建嵌套结构的评论数据
     const nestedComments = await buildNestedComments(comments);
     return {
-      data: nestedComments,
-      pagination: {
-        page,
-        limit,
-        total: Math.ceil(comments.length/limit),
-      },
+      code: 200,
+      message: "Comments fetched successfully",
+      data: {
+        comments: nestedComments,
+        pagination: {
+          page,
+          limit,
+          totalPage: Math.ceil(comments.length/limit),
+        },
+      }
     }
   } else {
     // 构建平面结构的评论数据
@@ -35,11 +43,15 @@ async (comments: Comment[] | null, page: number, limit: number, nested: boolean)
     })));
     
     return {
-      data: plainComments,
-      pagination: {
-        page,
-        limit,
-        total: comments.length
+      code: 200,
+      message: "Comments fetched successfully",
+      data: {
+        comments: plainComments,
+        pagination: {
+          page,
+          limit,
+          totalPage: comments.length
+        }
       }
     };
   }
@@ -92,8 +104,15 @@ const buildNestedComments = async (comments: Comment[]): Promise<NestedComment[]
 */
 const getResponseCommentAdmin = async (comments: Comment[] | null, page: number): Promise<CommentAdminResponse> => {
   if(comments === null) {
-    return { data: [], pagination: { page: 1, limit: 20, total: 0 } };
-  }
+    return { 
+      code: 200,
+      message: "Comments fetched successfully",
+      data: {
+        comments: [], 
+        pagination: { page: 1, limit: 20, totalPage: 0 } 
+      }
+    }
+  };
   
   const limit = 10;
   const total = comments.length;
@@ -108,21 +127,28 @@ const getResponseCommentAdmin = async (comments: Comment[] | null, page: number)
   const adminComments = await Promise.all(pageComments.map(async comment => ({
     id: comment.id,
     pubDate: comment.pub_date.toISOString(),
+    postSlug: comment.post_slug,
     author: comment.author,
     email: comment.email,
     url: comment.url || undefined,
     ipAddress: comment.ip_address || '',
+    os: comment.os || '',
+    browser: comment.browser || '',
     contentText: comment.content_text,
     contentHtml: comment.content_html,
     status: comment.status
   })));
 
   return {
-    data: adminComments,
-    pagination: {
-      page: page,
-      limit: limit,
-      total: totalPages
+    code: 200,
+    message: "Comments fetched successfully",
+    data: {
+      comments: adminComments,
+      pagination: {
+        page: page,
+        limit: limit,
+        totalPage: totalPages
+      }
     }
   };
 };

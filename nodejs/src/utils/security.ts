@@ -26,7 +26,7 @@ export function generateTempKey(username: string): string {
     const now = Date.now();
     const data = `${username}-${now}-${process.env.ADMIN_PASSWORD}`;
     const hash = crypto.createHash('sha256').update(data).digest('hex');
-    const expiresAt = now + 5 * 60 * 1000; // 5分钟后过期
+    const expiresAt = now + 20 * 60 * 1000; // 5分钟后过期
     
     tempKeys.set(username, { key: hash, expiresAt });
     
@@ -52,6 +52,22 @@ export function checkKey(key: string): boolean {
     }
     
     return false;
+}
+
+/**
+ * 从 Authorization header 中提取 token
+ * 支持格式：Bearer <token> 或直接返回 token
+ */
+export function extractToken(authHeader: string): string {
+    if (!authHeader) return "";
+    
+    // 如果是 "Bearer <token>" 格式，提取 token
+    if (authHeader.startsWith("Bearer ")) {
+        return authHeader.substring(7);
+    }
+    
+    // 否则直接返回 header 值
+    return authHeader;
 }
 
 export function checkAdmin(name: string, password: string): boolean { 

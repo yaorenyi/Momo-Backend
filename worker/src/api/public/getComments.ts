@@ -45,23 +45,32 @@ export const getComments = async (c: Context<{ Bindings: Bindings }>) => {
 
       // 对根评论进行分页
       const paginatedData = rootComments.slice(offset, offset + limit)
+      console.log(paginatedData)
       return c.json({ 
-        data: paginatedData,
-        pagination: {
-          page,
-          limit,
-          total: Math.ceil(allComments.length / limit),
+        code: 200,
+        message: 'Comments fetched successfully',
+        data: {
+          comments: paginatedData,
+          pagination: {
+            page,
+            limit,
+            totalPage: Math.ceil(allComments.length / limit),
+          }
         } 
       })
     } else {
       // 非嵌套逻辑直接分页
       const paginatedData = allComments.slice(offset, offset + limit)
       return c.json({
-        data: paginatedData,
-        pagination: {
-          page,
-          limit,
-          total: Math.ceil(allComments.length / limit)
+        code: 200,
+        message: 'Comments fetched successfully',
+        data: {
+          comments: paginatedData,
+          pagination: {
+            page,
+            limit,
+            totalPage: Math.ceil(allComments.length / limit)
+          }
         }
       })
     }

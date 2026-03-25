@@ -9,5 +9,9 @@
 	"compatibility_date": "2026-01-03",
 	"observability": {
 		"enabled": true
+	},
+	"assets": {
+		"directory": "./public", // 指向 Vue 编译后的文件夹
+		"not_found_handling": "single-page-application" // 关键：开启 SPA 路由支持
 	}
 }
