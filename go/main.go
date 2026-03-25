@@ -18,6 +18,9 @@ import (
 )
 
 func main() {
+
+	gin.SetMode(gin.ReleaseMode)
+
 	// 1. 加载配置
 	cfg, err := config.LoadConfig()
 	if err != nil {

@@ -33,14 +33,19 @@ Momo Backend 包含前端部署和服务器部署两个模块：
 
 ### 后端部署
 
-目前提供了两种部署方式：
+目前提供了三种部署方式：
 
 * 基于 Node.js 开发环境，本地部署
+* 基于 Go 开发的二进制文件，本地部署
 * 基于 Cloudflare Worker，无需服务器部署
 
-请访问对应的文档获取具体的部署信息：[Node.js 版本](./nodejs/README.md)，[Cloudflare Worker 版本](./worker/README.md)
+请访问对应的文档获取具体的部署信息：[Node.js 版本](./nodejs/README.md)，[Go 版本](./go/README.md)，[Cloudflare Worker 版本](./worker/README.md)
 
 后续会提供Vercel版本；如果需要提供其他平台的部署方式，可以告诉我。
+
+### 后端管理面板
+
+使用 Vue 开发，位于 `/dashboard` 目录下
 
 ## 其他
 

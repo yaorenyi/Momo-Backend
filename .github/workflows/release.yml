@@ -1,4 +1,4 @@
-name: Zip and Release
+name: Release
 
 on:
   push:
@@ -6,34 +6,106 @@ on:
       - 'v*'
 
 jobs:
-  zip-and-release:
+  build-dashboard:
+    name: Build Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Build Dashboard
+        run: |
+          cd ./dashboard
+          pnpm install
+          pnpm run build
+      # 保存打包后的静态文件
+      - name: Upload Dashboard Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dist
+          path: dashboard/dist/
+
+  build-go:
+    name: Build Go Version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows]
+        goarch: ["amd64"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Build
+        run: |
+          cd ./go
+          APP_NAME="momo-backend"
+          OUTPUT="${APP_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          [ "${{ matrix.goos }}" = "windows" ] && OUTPUT="${OUTPUT}.exe"
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o "dist/${OUTPUT}" main.go
+      # 保存编译好的二进制文件
+      - name: Upload Go Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-bin-${{ matrix.goos }}
+          path: go/dist/
+
+  zip-files:
+    name: Zip Files
+    needs: [build-dashboard, build-go] # 必须等待编译完成
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Zip NodeJS folder
+      # 下载之前保存的所有产物
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./downloads
+
+      - name: Prepare and Zip
         run: |
+          # 1. 准备 dashboard 静态资源路径
+          DIST_PATH=$(pwd)/downloads/dashboard-dist
+          
+          # 2. 打包 Nodejs & Worker (包含 public)
+          mkdir -p nodejs/public worker/public
+          cp -r $DIST_PATH/* nodejs/public/
+          cp -r $DIST_PATH/* worker/public/
           zip -r nodejs.zip nodejs/ -x "*.git*"
-
-      - name: Zip Worker folder
-        run: |
           zip -r worker.zip worker/ -x "*.git*"
-      
-      - name: Zip Frontend folder
-        run: |
+
+          # 3. 打包前端源码和 Dashboard 源码 (不含 dist)
           zip -r frontend.zip frontend/ -x "*.git*"
+          zip -r dashboard-src.zip dashboard/ -x "*.git*" -x "dashboard/dist/*"
+
+          # 4. 打包 Go 版本
+          mkdir -p go-release/public
+          cp -r $DIST_PATH/* go-release/public/
+          
+          # 处理 Linux 二进制
+          cp downloads/go-bin-linux/momo-backend-linux-amd64 go-release/
+          tar -czhf momo-backend-linux-amd64.tar.gz -C go-release .
+          
+          # 处理 Windows 二进制
+          rm go-release/momo-backend-linux-amd64
+          cp downloads/go-bin-windows/momo-backend-windows-amd64.exe go-release/
+          zip -r momo-backend-windows-amd64.zip go-release/
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            nodejs.zip
-            worker.zip
-            frontend.zip
+            *.zip
+            *.tar.gz
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
