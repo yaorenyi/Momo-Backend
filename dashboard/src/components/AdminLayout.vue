@@ -5,7 +5,7 @@
     
     <!-- 移动端侧边栏弹窗 -->
     <aside :class="[
-      'static md:static top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out border-r',
+      'fixed md:static top-0 left-0 z-50 h-full flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out border-r',
       'w-64',
       isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
       'md:w-64',

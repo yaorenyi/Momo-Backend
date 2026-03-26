@@ -9,7 +9,7 @@
 ```html
 <div id="momo-comment"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@motues/momo-comment/dist/momo-comment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@motues/momo-comment@1.0.x/dist/momo-comment.min.js"></script>
 <script>
     momo.init({
         el: '#momo-comment', // 评论容器的 id
@@ -20,6 +20,8 @@
         });
 </script>
 ```
+
+> 建议使用版本号锁定版本，避免版本更新导致冲突
 
 ## 自定义样式
 
@@ -32,6 +34,7 @@
     --momo-button-hover-bg-color: #f5f5f5; /* 按钮背景颜色（hover 状态）*/
     --momo-link-color: #003b6e;            /* 链接颜色 */
 }
+/* 暗色模式 */
 [data-theme="dark"] { 
     --momo-text-color: #3ad8d8;
     --momo-button-border-color: #2e2e2e;
@@ -46,21 +49,13 @@
 
 #### 1. 克隆项目，安装依赖
 
-可以直接克隆仓库代码，或者从 Release 下载最新的稳定代码，这里推荐选择后面一种。
+克隆仓库代码
 
-* **克隆仓库**
-	```bash
-	git clone https://github.com/Motues/Momo-Backend.git
-	cd Momo-Backend/frontend
-	pnpm install
-	```
-* **从 Release 下载代码**，可以使用命令行，也可以浏览器直接下载然后解压
-	```bash
-	wget https://github.com/Motues/Momo-Backend/releases/latest/download/frontend.zip
-    unzip frontend.zip
-    cd frontend
-    pnpm install
-	```
+```bash
+git clone https://github.com/Motues/Momo-Backend.git
+cd Momo-Backend/frontend
+pnpm install
+```
 
 #### 2. 编译
 

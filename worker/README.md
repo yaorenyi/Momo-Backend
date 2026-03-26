@@ -190,6 +190,7 @@ cd ../nodejs
 | `RESEND_API_KEY` | Resend API Key，用于启用邮件通知服务，如**果不需要邮件通知服务，可以不填** |
 | `RESEND_FROM_EMAIL` | Resend 发送邮件的邮箱，用于邮件通知服务，**如果不需要邮件通知服务，可以不填** |
 | `EMAIL_ADDRESS` | 管理员接收通知邮件的邮箱，用于邮件通知服务，**如果不需要邮件通知服务，可以不填** |
+| `SITE_NAME` | 站点名称，如果不需要邮件服务可以不填 |
 | `ADMIN_NAME` | 管理员登录名称，默认为 admin |
 | `ADMIN_PASSWORD` | 管理员登录密码，默认密码为 password |
 

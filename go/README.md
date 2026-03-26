@@ -13,100 +13,51 @@ Momo Backend Go 是一个基于 Go 语言开发的博客评论系统，使用 Gi
 
 从 [Release](https://github.com/Motues/Momo-Backend/releases/latest) 下载最新的 Go 版本压缩包，根据你的系统选择对应的文件：
 
-* **Linux**: `momo-backend-linux-amd64.tar.gz` 
-* **Windows**: `momo-backend-windows-amd64.zip`
+* **Linux**: `go-linux-amd64.tar.gz` 
+* **Windows**: `go-windows-amd64.zip`
 
-以 Linux 为例：
+以 Linux 为例，可以使用自带的脚本进行部署：
 
 ```bash
-wget https://github.com/Motues/Momo-Backend/releases/latest/download/momo-backend-linux-amd64.tar.gz
-tar -xzf momo-backend-linux-amd64.tar.gz
-./momo-backend-go
+wget https://github.com/Motues/Momo-Backend/releases/latest/download/go-linux-amd64.tar.gz
+tar -xzf mgo-linux-amd64.tar.gz
+chmod +x momo.bash
+./momo.bash
+# 然后根据提示进行操作
 ```
 
 #### 2. 设置环境变量
 
-允许之后会生成一个 `./config/config.yaml` 文件，请根据需要修改。
+运行之后会生成一个 `./config/config.yaml` 文件，可以参考[这里]()据需要修改，修改后需要重启服务。
 
 ```bash
 vim ./config/config.yaml
 # 根据实际情况修改环境变量
-```
-
-#### 3. 启动服务
-
-直接运行二进制文件：
-
-```bash
-./momo-backend
+./momo.bash
 ```
 
 启动成功后，访问 `http://localhost:17171`
-
-**建议使用 systemd 或 pm2 管理进程**
-
-* **使用 systemd (推荐)**
-
-创建服务文件 `/etc/systemd/system/momo-backend.service`：
-
-```ini
-[Unit]
-Description=Momo Backend Go Service
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/path/to/momo-backend
-EnvironmentFile=/path/to/momo-backend/.env
-ExecStart=/path/to/momo-backend/momo-backend
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-然后启动服务：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable momo-backend
-sudo systemctl start momo-backend
-sudo systemctl status momo-backend
-```
-
-* **使用 pm2**
-
-```bash
-npm install -g pm2
-pm2 start ./momo-backend --name momo-backend-go
-pm2 save
-pm2 startup
-```
 
 ## 环境变量
 
 | 变量名 | 说明 | 
 | ------ | ---- | 
-| `PORT` | 端口号，默认为 17172 |
-| `DATABASE_URL` | 数据库连接地址，默认为 `./data/momo.db` |
-| `ALLOW_ORIGIN` | 允许跨域访问的域名，多个域名用逗号分隔 |
+| `PORT` | 端口号，默认为17171 |
+| `ALLOW_ORIGIN` | 允许跨域访问的域名 |
 | `RESEND_API_KEY` | Resend API Key，用于启用邮箱通知功能；**如不开启，请设置为空** |
 | `RESEND_FROM_EMAIL` | Resend 邮件发送通知的邮箱，需要在 Resend 中认证；**如不开启，请设置为空** |
 | `EMAIL_ADDRESS` | 管理员邮件接收通知的邮箱；**如不开启，请设置为空** |
-| [ADMIN_NAME](file://c:\Data\Desktop\Github\Motues\Momo-Backend\worker\src\api\admin\login.ts#L21-L21) | 管理员登录账号 |
-| [ADMIN_PASSWORD](file://c:\Data\Desktop\Github\Motues\Momo-Backend\worker\src\api\admin\login.ts#L22-L22) | 管理员登录密码 |
-
-**注:** [Resend 官网](https://resend.com/)
+| `SITE_NAME` | 站点名称，用于邮件通知，如果不使用邮件服务可以不设置 |
+| `ADMIN_NAME` | 管理员登录账号 |
+| `ADMIN_PASSWORD` | 管理员登录密码 |
 
 ## 其他
 
-* 日志通过标准输出打印，可通过 `journalctl -u momo-backend -f` (systemd) 或 `pm2 logs` (pm2) 查看
+* 日志存放在 `momo.log` 中，可以使用 `momo.bash` 脚本查看
 * 超过 5 次错误登录，则锁定 IP 30 分钟
 * Token 有效期为 20 分钟
 * 数据库文件默认存放在 `./data/momo.db`
-* 静态文件（管理页面）已内嵌到二进制文件中，无需单独部署
+* 静态文件存放在 `./public` 中，如果只需要更新后台管理页面，则可以直接替换 `./public` 中的文件
 
 ## Ngnix 配置
 
@@ -134,12 +85,12 @@ server {
 
 ## 自行编译
 
-如果你想要自行编译源代码，需要安装 Go 1.21+ 环境：
+如果你想要自行编译源代码，需要安装 Go 1.25 环境：
 
 ```bash
 cd go
 go mod download
-go build -o momo-backend main.go
+go build -o ./build/momo-backend main.go
 ```
 
 编译完成后，将生成的二进制文件移动到合适的位置，并按照上述步骤进行配置。
@@ -151,7 +102,5 @@ go build -o momo-backend main.go
 1. 备份数据库文件（通常位于 `nodejs/prisma/dev.db` 或你自定义的路径）
 2. 下载 Go 版本的二进制文件
 3. 配置相同的环境变量
-4. 将备份的数据库文件放到 `./data/momo.db` 或通过 `DATABASE_URL` 指定路径
+4. 将备份的数据库文件放到 `./data/data.db` 
 5. 启动 Go 版本服务
-
-Go 版本具有更好的性能、更低的内存占用和更简单的部署流程。

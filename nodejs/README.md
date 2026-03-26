@@ -83,6 +83,7 @@ pm2 start dist/app.js --name momo-backend
 | `RESEND_API_KEY` | Resend API Key，用于启用邮箱通知功能；**如不开启，请设置为空** |
 | `RESEND_FROM_EMAIL` | Resend 邮件发送通知的邮箱，需要在 Resend 中认证；**如不开启，请设置为空** |
 | `EMAIL_ADDRESS` | 管理员邮件接收通知的邮箱；**如不开启，请设置为空** |
+| `SITE_NAME` | 站点名称，用于邮件通知，如果不使用邮件服务可以不设置 |
 | `ADMIN_NAME` | 管理员登录账号 |
 | `ADMIN_PASSWORD` | 管理员登录密码 |
 
@@ -91,7 +92,7 @@ pm2 start dist/app.js --name momo-backend
 ## 其他
 
 * 日志存放在 `./logs/` 目录下 
-* 超过5次错误登录，则锁定账号 10 分钟，需要重新登录
+* 超过5次错误登录，则锁定账号 30 分钟，需要重新登录
 * 配置好环境变量后，可以使用 `pnpm deploy` 命令一键编译部署，并且会自动备份数据库
 
 ## Ngnix 配置
