@@ -18,7 +18,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
-				"message": "Authorization header is missing or format is invalid",
+				"message": "Invalid token",
 			})
 			return
 		}
@@ -30,7 +30,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if token == "" || !utils.IsTokenValid(token) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
-				"message": "Invalid or expired token",
+				"message": "Invalid token",
 			})
 			return
 		}

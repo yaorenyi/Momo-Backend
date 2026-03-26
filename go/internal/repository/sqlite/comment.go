@@ -84,8 +84,22 @@ func (r *commentRepo) GetByID(ctx context.Context, id int64) (*model.Comment, er
 }
 
 func (r *commentRepo) UpdateStatus(ctx context.Context, id int64, status string) error {
-	_, err := r.db.ExecContext(ctx, "UPDATE Comment SET status = ? WHERE id = ?", status, id)
-	return err
+	if status == "deleted" || status == "pending" {
+		query := `
+			WITH RECURSIVE comment_tree AS (
+				SELECT id FROM Comment WHERE id = ?
+				UNION ALL
+				SELECT c.id FROM Comment c
+				INNER JOIN comment_tree ct ON c.parent_id = ct.id
+			)
+			UPDATE Comment SET status = ? WHERE id IN (SELECT id FROM comment_tree)
+		`
+		_, err := r.db.ExecContext(ctx, query, id, status)
+		return err
+	} else {
+		_, err := r.db.ExecContext(ctx, "UPDATE Comment SET status = ? WHERE id = ?", status, id)
+		return err
+	}
 }
 
 func (r *commentRepo) Delete(ctx context.Context, id int64) error {

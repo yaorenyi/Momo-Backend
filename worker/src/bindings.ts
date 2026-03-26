@@ -7,4 +7,5 @@ export type Bindings = {
   EMAIL_ADDRESS?: string
   ADMIN_NAME: string
   ADMIN_PASSWORD: string
+  SITE_NAME?: string
 }

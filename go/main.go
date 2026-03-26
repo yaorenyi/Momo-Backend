@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/ua-parser/uap-go/uaparser"
 	_ "modernc.org/sqlite"
 )
 
@@ -42,9 +43,10 @@ func main() {
 		log.Fatalf("初始化表结构失败: %v", err)
 	}
 
-	// 4. 初始化 Repository 和 Handler
+	// 4. 初始化
+	uaParser := uaparser.NewFromSaved()
 	repo := sqlite.NewCommentRepository(db)
-	handler := &h.CommentHandler{Repo: repo}
+	handler := &h.CommentHandler{Repo: repo, UAParser: uaParser}
 
 	// 5. 设置 Gin 引擎
 	r := gin.Default()

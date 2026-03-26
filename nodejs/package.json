@@ -1,6 +1,6 @@
 {
-  "name": "Momo-Backend",
-  "version": "1.0.0",
+  "name": "momo-backend-nodejs",
+  "version": "1.0.1",
   "description": "",
   "main": "app.js",
   "scripts": {

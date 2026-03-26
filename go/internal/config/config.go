@@ -16,6 +16,7 @@ type Config struct {
 	EmailAddress    string `yaml:"EMAIL_ADDRESS"`
 	AdminName       string `yaml:"ADMIN_NAME"`
 	AdminPassword   string `yaml:"ADMIN_PASSWORD"`
+	SiteName        string `yaml:"SITE_NAME,omitempty"`
 }
 
 var GlobalConfig *Config
@@ -30,6 +31,7 @@ func DefaultConfig() *Config {
 		EmailAddress:    "me@example.com",
 		AdminName:       "admin",
 		AdminPassword:   "password",
+		SiteName:        "Momo Blog",
 	}
 }
 

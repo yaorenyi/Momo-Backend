@@ -33,14 +33,19 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 
 	// 1. 获取并解析 User-Agent
 	uaString := c.GetHeader("User-Agent")
-	var deviceStr, browserStr string
+	var deviceStr, browserStr, osStr string
+
+	// fmt.Printf("Received User-Agent: %s\n", uaString)
 
 	if h.UAParser != nil && uaString != "" {
 		client := h.UAParser.Parse(uaString)
+		// fmt.Printf("Parsed User-Agent: %+v\n", client)
 		// 拼接设备信息：例如 "Windows 10" 或 "iPhone"
 		deviceStr = fmt.Sprintf("%s %s", client.Os.Family, client.Os.Major)
 		// 拼接浏览器信息：例如 "Chrome 122.0"
 		browserStr = fmt.Sprintf("%s %s", client.UserAgent.Family, client.UserAgent.Major)
+		// 拼接操作系统信息：例如 "Windows 10" 或 "iOS 15.0"
+		osStr = fmt.Sprintf("%s %s", client.Os.Family, client.Os.Major)
 	}
 
 	// 2. 构造数据库模型
@@ -62,6 +67,8 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 		IPAddress:   ptrString(utils.GetClientIP(c)),
 		Device:      ptrString(deviceStr),
 		Browser:     ptrString(browserStr),
+		UserAgent:   ptrString(uaString),
+		OS:          ptrString(osStr),
 		Status:      "approved",
 	}
 
@@ -83,7 +90,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 
 			if req.ParentID != nil {
 				parentComment, err := h.Repo.GetByID(ctx, *req.ParentID)
-				fmt.Printf("Parent Comment: %+v\n", parentComment)
+				// fmt.Printf("Parent Comment: %+v\n", parentComment)
 				if err != nil {
 					log.Printf("Failed to fetch parent comment: %v", err)
 					return

@@ -52,7 +52,7 @@ export async function sendCommentReplyNotification(
   return await resendFetch(env, {
     from: `评论通知 ${env.RESEND_FROM_EMAIL}`,
     to: [toEmail],
-    subject: `你在 momo.motues.top 上的评论有了新回复`,
+    subject: `你在 ${env.SITE_NAME ?? 'Momo Blog'} 上的评论有了新回复`,
     html: `
       <div style="background-color: #f4f7f9; padding: 20px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e1e4e8;">
@@ -109,7 +109,7 @@ const { postTitle, postUrl, commentAuthor, commentContent } = params;
   return await resendFetch(env, {
     from: `评论提醒 ${env.RESEND_FROM_EMAIL}`,
     to: [env.EMAIL_ADDRESS],
-    subject: `新评论通知：${postTitle}`,
+    subject: `你在 ${env.SITE_NAME ?? 'Momo Blog'} 有了新评论`,
     html: `
       <div style="background-color: #f6f8fa; padding: 40px 20px; min-height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); overflow: hidden;">

@@ -30,7 +30,14 @@ service.interceptors.response.use(
   response => {
     const res = response.data
     // API 规定成功状态码为 200
-    if (res.code && res.code !== 200 && res.code !== 401) {
+    if (res.code && res.code !== 200) {
+      // Token 失效或登录过期
+      if (res.code === 401) {
+        ElMessage.error('登录已过期或凭证无效，请重新登录')
+        localStorage.removeItem('token')
+        router.push('/login')
+        return Promise.reject(error)
+      }
       ElMessage.error(res.message || 'Error')
       return Promise.reject(new Error(res.message || 'Error'))
     }
@@ -42,6 +49,13 @@ service.interceptors.response.use(
       const res = error.response.data
       // 如果 code 存在且不是 400，输出对应的 message
       if (res.code && res.code !== 400) {
+        // Token 失效或登录过期
+        if (res.code === 401) {
+          ElMessage.error('登录已过期或凭证无效，请重新登录')
+          localStorage.removeItem('token')
+          router.push('/login')
+          return Promise.reject(error)
+        }
         ElMessage.error(res.message || 'Error')
         return Promise.reject(error)
       }
