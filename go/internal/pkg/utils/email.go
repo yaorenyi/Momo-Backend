@@ -115,7 +115,7 @@ func (s *EmailService) SendCommentNotification(
 	}
 
 	htmlContent := fmt.Sprintf(`
-       <div style="background-color: #f6f8fa; padding: 40px 20px; min-height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;">
+       <div style="background-color: #f6f8fa; padding: 40px 20px; min-height: 100%%; font-family: 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); overflow: hidden;">
     
     <div style="height: 4px; background: linear-gradient(90deg, #007acc, #00c6ff);"></div>

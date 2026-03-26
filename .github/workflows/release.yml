@@ -126,6 +126,7 @@ jobs:
           LINUX_BIN="downloads/go-bin-linux/momo-backend-linux-amd64"
           if [ -f "$LINUX_BIN" ]; then
             cp "$LINUX_BIN" go-release/
+            cp go/script/momo.bash go-release/
             tar -czhf go-linux-amd64.tar.gz -C go-release .
             rm go-release/momo-backend-linux-amd64
           fi
