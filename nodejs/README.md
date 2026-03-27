@@ -80,12 +80,16 @@ pm2 start dist/app.js --name momo-backend
 | `PORT` | 端口号，默认为17171 |
 | `DATABASE_URL` | 数据库连接地址 |
 | `ALLOW_ORIGIN` | 允许跨域访问的域名 |
-| `RESEND_API_KEY` | Resend API Key，用于启用邮箱通知功能；**如不开启，请设置为空** |
-| `RESEND_FROM_EMAIL` | Resend 邮件发送通知的邮箱，需要在 Resend 中认证；**如不开启，请设置为空** |
-| `EMAIL_ADDRESS` | 管理员邮件接收通知的邮箱；**如不开启，请设置为空** |
 | `SITE_NAME` | 站点名称，用于邮件通知，如果不使用邮件服务可以不设置 |
 | `ADMIN_NAME` | 管理员登录账号 |
 | `ADMIN_PASSWORD` | 管理员登录密码 |
+| `ADMIN_ADDRESS` | 管理员邮件接收通知的邮箱；**如不开启，请设置为空** |
+| `ADMIN_EMAIL` | 管理员邮箱，用于接收邮件，**如果不需要邮件服务可以不填** |
+| `SMTP_HOST` | SMTP 服务器地址，**如果不需要邮件服务可以不填** |
+| `SMTP_PORT` | SMTP 端口，默认为 465，**如果不需要邮件服务可以不填** |
+| `EMAIL_USER` | SMTP 用户名，**如果不需要邮件服务可以不填** |
+| `EMAIL_PASSWORD` | SMTP 密码，**如果不需要邮件服务可以不填** |
+| `EMAIL_SECURE` | SMTP 是否使用 SSL，默认为 true |
 
 **注:** [Resend 官网](https://resend.com/)
 

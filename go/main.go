@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	// _ "net/http/pprof" // 隐式初始化 pprof 路由
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,11 +16,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	"github.com/ua-parser/uap-go/uaparser"
 	_ "modernc.org/sqlite"
 )
 
 func main() {
+
+	// go func() {
+	// 	// 启动一个独立的端口供 pprof 访问
+	// 	http.ListenAndServe("0.0.0.0:6060", nil)
+	// }()
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -44,9 +50,8 @@ func main() {
 	}
 
 	// 4. 初始化
-	uaParser := uaparser.NewFromSaved()
 	repo := sqlite.NewCommentRepository(db)
-	handler := &h.CommentHandler{Repo: repo, UAParser: uaParser}
+	handler := &h.CommentHandler{Repo: repo}
 
 	// 5. 设置 Gin 引擎
 	r := gin.Default()

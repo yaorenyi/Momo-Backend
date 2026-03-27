@@ -9,14 +9,17 @@ import (
 
 // Config 结构体对应你的配置文件字段
 type Config struct {
-	Port            int    `yaml:"PORT"`
-	AllowOrigin     string `yaml:"ALLOW_ORIGIN"`
-	ResendAPIKey    string `yaml:"RESEND_API_KEY"`
-	ResendFromEmail string `yaml:"RESEND_FROM_EMAIL"`
-	EmailAddress    string `yaml:"EMAIL_ADDRESS"`
-	AdminName       string `yaml:"ADMIN_NAME"`
-	AdminPassword   string `yaml:"ADMIN_PASSWORD"`
-	SiteName        string `yaml:"SITE_NAME,omitempty"`
+	Port          int    `yaml:"PORT"`
+	AllowOrigin   string `yaml:"ALLOW_ORIGIN"`
+	SiteName      string `yaml:"SITE_NAME,omitempty"`
+	AdminName     string `yaml:"ADMIN_NAME"`
+	AdminPassword string `yaml:"ADMIN_PASSWORD"`
+	AdminEmail    string `yaml:"ADMIN_EMAIL"`
+	SMTPHost      string `yaml:"SMTP_HOST"`
+	SMTPPort      int    `yaml:"SMTP_PORT"`
+	EmailUser     string `yaml:"EMAIL_USER"`
+	EmailPassword string `yaml:"EMAIL_PASSWORD"`
+	EmailSecure   bool   `yaml:"EMAIL_SECURE"`
 }
 
 var GlobalConfig *Config
@@ -24,14 +27,17 @@ var GlobalConfig *Config
 // DefaultConfig 默认配置内容
 func DefaultConfig() *Config {
 	return &Config{
-		Port:            17171,
-		AllowOrigin:     "http://localhost:4321,https://example.com",
-		ResendAPIKey:    "re_xxxxxx",
-		ResendFromEmail: "<notify@notifications.example.com>",
-		EmailAddress:    "me@example.com",
-		AdminName:       "admin",
-		AdminPassword:   "password",
-		SiteName:        "Momo Blog",
+		Port:          17171,
+		AllowOrigin:   "http://localhost:4321,https://example.com",
+		AdminName:     "admin",
+		AdminPassword: "password",
+		SiteName:      "Momo Blog",
+		AdminEmail:    "admin@example.com",
+		SMTPHost:      "smtp.example.com",
+		SMTPPort:      465,
+		EmailUser:     "notify@example.com",
+		EmailPassword: "xxx",
+		EmailSecure:   true,
 	}
 }
 

@@ -1,7 +1,15 @@
-ALLOW_ORIGIN="http://localhost:4321,https://blog.example.top"
-RESEND_API_KEY="re_xxxxxxxx"
-RESEND_FROM_EMAIL="<notify@notifications.example.top>"
-EMAIL_ADDRESS="admin@example.top"
-ADMIN_NAME="Admin"
-ADMIN_PASSWORD="password"
-SITE_NAME="Momo Blog"
+# allow origin for CORS, separated by comma
+ALLOW_ORIGIN="https://blog.example.com,http://localhost:4321"  
+
+# Site Settings
+SITE_NAME="Momo Blog"                            # site name
+ADMIN_NAME="admin"                               # admin name
+ADMIN_PASSWORD="password"                        # admin password
+ADMIN_EMAIL="admin@example.com"                  # admin email, used for receiving notifications
+
+# Email Settings
+SMTP_HOST="smtp.qq.com"                          # email host, set to empty string to disable email notifications
+SMTP_PORT=465                                    # email port
+EMAIL_USER="example@qq.com"                      # email user
+EMAIL_PASSWORD="xxxxxxxx"                        # email password
+EMAIL_SECURE=true                                # whether to use secure connection (SSL/TLS)

@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Bindings } from './bindings'
-import { HomeView } from './views/html'
 import { customCors } from './utils/cors'
 import { adminAuth } from './utils/auth'
 

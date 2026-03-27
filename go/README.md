@@ -28,7 +28,7 @@ chmod +x momo.bash
 
 #### 2. 设置环境变量
 
-运行之后会生成一个 `./config/config.yaml` 文件，可以参考[这里]()据需要修改，修改后需要重启服务。
+运行之后会生成一个 `./config/config.yaml` 文件，可以参考[这里](#环境变量)据需要修改，修改后需要重启服务。
 
 ```bash
 vim ./config/config.yaml
@@ -40,16 +40,26 @@ vim ./config/config.yaml
 
 ## 环境变量
 
-| 变量名 | 说明 | 
-| ------ | ---- | 
-| `PORT` | 端口号，默认为17171 |
-| `ALLOW_ORIGIN` | 允许跨域访问的域名 |
-| `RESEND_API_KEY` | Resend API Key，用于启用邮箱通知功能；**如不开启，请设置为空** |
-| `RESEND_FROM_EMAIL` | Resend 邮件发送通知的邮箱，需要在 Resend 中认证；**如不开启，请设置为空** |
-| `EMAIL_ADDRESS` | 管理员邮件接收通知的邮箱；**如不开启，请设置为空** |
-| `SITE_NAME` | 站点名称，用于邮件通知，如果不使用邮件服务可以不设置 |
-| `ADMIN_NAME` | 管理员登录账号 |
-| `ADMIN_PASSWORD` | 管理员登录密码 |
+```yaml
+# ./config/config.yaml
+# Development Settings
+PORT: 17171                                      # server port
+# allow origin for CORS, separated by comma
+ALLOW_ORIGIN: https://blog.example.com,http://localhost:4321
+
+# Site Settings
+SITE_NAME: Momo Blog                             # site name
+ADMIN_NAME: admin                                # admin name
+ADMIN_PASSWORD: password                         # admin password
+ADMIN_EMAIL: admin@example.com                   # admin email, used for receiving notifications
+
+# Email Settings
+SMTP_HOST: smtp.qq.com                           # email host, set to empty string to disable email notifications
+SMTP_PORT: 465                                   # email port
+EMAIL_USER: example@qq.com                       # email user
+EMAIL_PASSWORD: xxxxxxxx                         # email password
+EMAIL_SECURE: true                               # whether to use secure connection (SSL/TLS)
+```
 
 ## 其他
 

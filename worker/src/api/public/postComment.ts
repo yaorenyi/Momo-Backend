@@ -62,7 +62,8 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
     if (!success) throw new Error("Database insert failed");
 
     // 5. 发送邮件通知 (后台异步执行，不阻塞用户响应)
-    if (c.env.RESEND_API_KEY) {
+    if (c.env.EMAIL_USER && c.env.EMAIL_PASSWORD) {
+      console.log("Sending email notification...");
       c.executionCtx.waitUntil((async () => {
         try {
           if (data.parent_id) {
@@ -95,9 +96,11 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
           console.error("Mail Notification Failed:", mailError);
         }
       })());
+    }else{
+      console.log("No SMTP configuration found. Skipping email notification.");
     }
 
-    return c.json({ message: "Comment submitted. Awaiting moderation." });
+    return c.json({ message: "Comment submitted" });
 
   } catch (e: any) {
     console.error("Create Comment Error:", e);

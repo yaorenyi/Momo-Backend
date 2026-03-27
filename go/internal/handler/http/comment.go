@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"momo-backend-go/internal/model"
 	"momo-backend-go/internal/pkg/utils"
@@ -12,12 +11,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ua-parser/uap-go/uaparser"
+	"github.com/mileusna/useragent"
 )
 
 type CommentHandler struct {
-	Repo     repository.CommentRepository
-	UAParser *uaparser.Parser
+	Repo repository.CommentRepository
 }
 
 // PostComment 提交评论 (POST /api/comments)
@@ -37,15 +35,16 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 
 	// fmt.Printf("Received User-Agent: %s\n", uaString)
 
-	if h.UAParser != nil && uaString != "" {
-		client := h.UAParser.Parse(uaString)
-		// fmt.Printf("Parsed User-Agent: %+v\n", client)
-		// 拼接设备信息：例如 "Windows 10" 或 "iPhone"
-		deviceStr = fmt.Sprintf("%s %s", client.Os.Family, client.Os.Major)
-		// 拼接浏览器信息：例如 "Chrome 122.0"
-		browserStr = fmt.Sprintf("%s %s", client.UserAgent.Family, client.UserAgent.Major)
-		// 拼接操作系统信息：例如 "Windows 10" 或 "iOS 15.0"
-		osStr = fmt.Sprintf("%s %s", client.Os.Family, client.Os.Major)
+	ua := useragent.Parse(uaString)
+
+	osStr = ua.OS + " " + ua.OSVersion
+	browserStr = ua.Name + " " + ua.Version
+	if ua.Mobile {
+		deviceStr = "Mobile"
+	} else if ua.Tablet {
+		deviceStr = "Tablet"
+	} else {
+		deviceStr = "Desktop"
 	}
 
 	// 2. 构造数据库模型
@@ -96,7 +95,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 					return
 				}
 				if parentComment.Email != req.Email {
-					_, err = utils.GetService().SendCommentReplyNotification(
+					err = utils.GetService().SendCommentReplyNotification(
 						parentComment.Email,
 						parentComment.Author,
 						req.PostTitle,
@@ -112,7 +111,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 					}
 				}
 			} else {
-				_, err := utils.GetService().SendCommentNotification(
+				err := utils.GetService().SendCommentNotification(
 					req.PostTitle,
 					req.PostURL,
 					req.Author,

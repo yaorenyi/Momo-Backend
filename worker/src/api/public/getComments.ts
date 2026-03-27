@@ -45,7 +45,7 @@ export const getComments = async (c: Context<{ Bindings: Bindings }>) => {
 
       // 对根评论进行分页
       const paginatedData = rootComments.slice(offset, offset + limit)
-      console.log(paginatedData)
+      // console.log(paginatedData)
       return c.json({ 
         code: 200,
         message: 'Comments fetched successfully',

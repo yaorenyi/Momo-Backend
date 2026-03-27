@@ -41,7 +41,7 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
     }
     const comment = await CommentService.createComment(commentData);
     // 发送邮件通知
-    if(process.env.RESEND_API_KEY !== "") {
+    if(process.env.SMTP_HOST !== "") {
       if(data.parent_id) {
         LogService.info("Reply comment", { Name: comment.author, Email: comment.email})
         const parentComment = await CommentService.getCommentById(data.parent_id);

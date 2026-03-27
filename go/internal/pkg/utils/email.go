@@ -1,16 +1,18 @@
 package utils
 
 import (
+	"crypto/tls"
 	"fmt"
-	"momo-backend-go/internal/config"
 	"sync"
 
-	"github.com/resend/resend-go/v3"
+	"momo-backend-go/internal/config"
+
+	"gopkg.in/gomail.v2"
 )
 
 // 定义结构体
 type EmailService struct {
-	client    *resend.Client
+	dialer    *gomail.Dialer
 	fromEmail string
 	adminMail string
 	siteName  string
@@ -30,34 +32,46 @@ func GetService() *EmailService {
 			return
 		}
 
-		if cfg.ResendAPIKey == "" || cfg.ResendAPIKey == "re_xxxxxx" {
-			fmt.Println("警告：ResendAPIKey 未配置，邮件服务不可用")
+		// 对应你的 YAML 配置文件中的 EMAIL_USER 和 SMTP_HOST
+		if cfg.SMTPHost == "" || cfg.EmailUser == "" {
+			fmt.Println("警告：SMTP 配置缺失，邮件服务不可用")
 			return
 		}
 
-		client := resend.NewClient(cfg.ResendAPIKey)
+		// 初始化 Gomail Dialer
+		dialer := gomail.NewDialer(cfg.SMTPHost, cfg.SMTPPort, cfg.EmailUser, cfg.EmailPassword)
+
+		// 腾讯企业邮箱等使用 465 端口通常需要开启 TLS
+		// 结合你的 EMAIL_SECURE 配置进行设置
+		if cfg.EmailSecure {
+			dialer.TLSConfig = &tls.Config{ServerName: cfg.SMTPHost}
+		} else {
+			// 如果非强制安全，或者本地调试证书有问题，可以跳过验证
+			dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+
 		instance = &EmailService{
-			client:    client,
-			fromEmail: cfg.ResendFromEmail,
-			adminMail: cfg.EmailAddress,
+			dialer:    dialer,
+			fromEmail: cfg.EmailUser,  // 发件人邮箱即配置的 EMAIL_USER
+			adminMail: cfg.AdminEmail, // 站长接收邮箱
 			siteName:  cfg.SiteName,
 		}
-		fmt.Println("Resend 客户端初始化成功")
+		fmt.Println("SMTP 客户端初始化成功")
 	})
 	return instance
 }
 
 // IsAvailable 服务可用性检查
 func (s *EmailService) IsAvailable() bool {
-	return s != nil && s.client != nil
+	return s != nil && s.dialer != nil
 }
 
 // SendCommentReplyNotification 发送评论回复通知
 func (s *EmailService) SendCommentReplyNotification(
 	toEmail, toName, postTitle, parentComment, replyAuthor, replyContent, postUrl string,
-) (*resend.SendEmailResponse, error) {
+) error {
 	if !s.IsAvailable() {
-		return nil, fmt.Errorf("邮件服务未初始化")
+		return fmt.Errorf("邮件服务未初始化")
 	}
 
 	htmlContent := fmt.Sprintf(`
@@ -96,22 +110,21 @@ func (s *EmailService) SendCommentReplyNotification(
   </div>
 </div>`, toName, replyAuthor, postTitle, parentComment, replyContent, postUrl)
 
-	params := &resend.SendEmailRequest{
-		From:    fmt.Sprintf("评论通知 %s", s.fromEmail),
-		To:      []string{toEmail},
-		Subject: fmt.Sprintf("你在 %s 上的评论有了新回复", s.siteName),
-		Html:    htmlContent,
-	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", m.FormatAddress(s.fromEmail, fmt.Sprintf("%s 评论通知", s.siteName)))
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", fmt.Sprintf("你在 %s 上的评论有了新回复", s.siteName))
+	m.SetBody("text/html", htmlContent)
 
-	return s.client.Emails.Send(params)
+	return s.dialer.DialAndSend(m)
 }
 
 // SendCommentNotification 发送给站长的评论通知
 func (s *EmailService) SendCommentNotification(
 	postTitle, postUrl, commentAuthor, commentContent string,
-) (*resend.SendEmailResponse, error) {
+) error {
 	if !s.IsAvailable() {
-		return nil, fmt.Errorf("邮件服务未初始化")
+		return fmt.Errorf("邮件服务未初始化")
 	}
 
 	htmlContent := fmt.Sprintf(`
@@ -152,12 +165,11 @@ func (s *EmailService) SendCommentNotification(
   </div>
 </div>`, commentAuthor, postTitle, commentContent, postUrl)
 
-	params := &resend.SendEmailRequest{
-		From:    fmt.Sprintf("评论通知 %s", s.fromEmail),
-		To:      []string{s.adminMail},
-		Subject: fmt.Sprintf("你在 %s 上有新的评论", s.siteName),
-		Html:    htmlContent,
-	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", m.FormatAddress(s.fromEmail, fmt.Sprintf("%s 评论通知", s.siteName)))
+	m.SetHeader("To", s.adminMail)
+	m.SetHeader("Subject", fmt.Sprintf("你在 %s 上有新的评论", s.siteName))
+	m.SetBody("text/html", htmlContent)
 
-	return s.client.Emails.Send(params)
+	return s.dialer.DialAndSend(m)
 }
