@@ -1,5 +1,6 @@
 import { mount } from 'svelte';
 import Comments from './comment/Comments.svelte';
+import './style/main.css';
 
 const momo = {
   init: (options: { el:string, apiUrl: string; slugId: string; lang?: string; title?: string }) => {

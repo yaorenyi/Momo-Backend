@@ -158,50 +158,60 @@
   });
 </script>
 
-<div class="comment-container">
-  <div class="comment-form-wrapper">
-    <form on:submit|preventDefault={() => submitComment()} class="comment-form">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="author" class="form-label">{t('comments.name')}<span class="required">*</span></label>
-          <input id="author" type="text" placeholder={t('comments.required')} bind:value={author} class="form-input" />
+<div class="mt-4 mx-auto comment-container" id="comments">
+  <!-- <div class="my-6 border border-[var(--text-color)]/70"></div> -->
+  <!-- 评论输入 -->
+  <div data-aos="fade-up" class="mt-4">
+    <form on:submit|preventDefault={() => submitComment()} class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="">
+          <label for="author" class="block text-sm text-[var(--text-color)] mb-1">{t('comments.name')}<span class="text-red-500">*</span></label>
+          <input id="author" type="text" placeholder={t('comments.required')} bind:value={author}
+            class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)]  focus:outline-none focus:border-[var(--link-color)] text-sm p-2" />
         </div>
-        <div class="form-group">
-          <label for="email" class="form-label">{t('comments.email')}<span class="required">*</span></label>
-          <input id="email" type="email" placeholder={t('comments.required')} bind:value={email} class="form-input" />
+        <div class="">
+          <label for="email" class="block text-sm text-[var(--text-color)] mb-1">{t('comments.email')}<span class="text-red-500">*</span></label>
+          <input id="email" type="email" placeholder={t('comments.required')} bind:value={email}
+            class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)]  focus:outline-none focus:border-[var(--link-color)] text-sm p-2" />
         </div>
-        <div class="form-group">
-          <label for="url" class="form-label">{t('comments.site')}</label>
-          <input id="url" type="url" placeholder={t('comments.optional')} bind:value={url} class="form-input" />
+        <div class="">
+          <label for="url" class="block text-sm text-[var(--text-color)] mb-1">{t('comments.site')}</label>
+          <input id="url" type="url" placeholder={t('comments.optional')} bind:value={url}
+            class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)]  focus:outline-none focus:border-[var(--link-color)] text-sm p-2" />
         </div>
       </div>
 
-      <div class="textarea-wrapper">
-        <textarea placeholder={t('comments.welcome')} class="form-textarea" bind:value={content}></textarea>
-        <div class="textarea-footer">
+      <div>
+        <textarea placeholder={t('comments.welcome')}
+          class="rounded w-full border text-[var(--text-color)] border-[var(--button-border-color)]  focus:outline-none focus:border-[var(--link-color)] text-sm p-3 min-h-[100px]"
+          bind:value={content}></textarea>
+        <div class="text-right text-sm text-[var(--text-color)]/70 mt-1">
+          <!-- {getWordCount(content).chars} {t('comments.characters')} / {getWordCount(content).words} {t('comments.words')} -->
           {#if !isContentWithinLimit(content)}
-            <span class="error-text">{t('comments.contentTooLong') || '内容超出限制'}</span>
+            <span class="text-red-500 ml-2">{t('comments.contentTooLong') || '内容超出限制'}</span>
           {/if}
         </div>
       </div>
 
-      <div class="form-footer">
-        <button type="submit" disabled={submitting || !isContentWithinLimit(content)} class="btn-submit">
+      <div class="flex justify-end gap-3">
+        <button type="submit" disabled={submitting || !isContentWithinLimit(content)}
+          class="rounded px-4 py-2 text-sm font-medium text-[var(--text-color)] border border-[var(--button-border-color)] hover:bg-[var(--button-hover-bg-color)] disabled:opacity-50">
           {submitting ? t('comments.sending') : t('comments.send')}
         </button>
       </div>
     </form>
   </div>
 
-  <div class="comment-list-wrapper">
+  <!-- 评论区 -->
+  <div class="" id="comments-content">
     {#if loading}
-      <p class="status-message">{t('comments.loading')}</p>
+      <p data-aos="fade-up" class="text-[var(--text-color)] text-center">{t('comments.loading') || '正在加载评论...'}</p>
     {:else if error}
-      <p class="status-message error">{t('comments.loadFailed')}{error}</p>
+      <p data-aos="fade-up" class="text-red-500 text-center">{t('comments.loadFailed') || '加载失败：'}{error}</p>
     {:else}
-      <h4 class="comments-count">{comments.length} {t('comments.comments')}</h4>
+      <h4 data-aos="fade-up" class="text-[var(--text-color)] text-base font-semibold mb-4">{comments.length} {t('comments.comments')}</h4>
 
-      <div class="comments-list">
+      <div class="space-y-6">
         {#each comments as c}
           <CommentItem {c} {postSlug} {author} {email} {url} {language} {apiUrl}
             on:reply={(e) => setReplyingTo(e.detail)} 
@@ -215,165 +225,11 @@
       </div>
 
       {#if hasMore}
-        <div class="load-more-wrapper">
-          <button on:click={() => { page++; loadComments(); }} class="btn-load-more">
-            {t('comments.loadMore')}
-          </button>
+        <div data-aos="fade-up" class="flex justify-center mt-6">
+          <button on:click={() => { page++; loadComments(); }}
+            class="text-indigo-600 hover:underline text-sm">{t('comments.loadMore') || '加载更多'}</button>
         </div>
       {/if}
     {/if}
   </div>
 </div>
-
-<style>
-.comment-container {
-  --text-color: var(--momo-text-color, #000000);
-  --button-border-color: var(--momo-button-border-color, #e5e5e5);
-  --button-hover-bg-color: var(--momo-button-hover-bg-color, #f5f5f5);
-  --link-color: var(--momo-link-color, #003b6e);
-}
-:global([data-theme="dark"]) .comment-container {
-  --text-color: var(--momo-text-color, #ffffff);
-  --button-border-color: var(--momo-button-border-color, #3d3d3d);
-  --button-hover-bg-color: var(--momo-button-hover-bg-color, #262626);
-  --link-color: var(--momo-link-color, #57ace7);
-}
-.comment-container {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.comment-form-wrapper {
-  margin-top: 1rem;
-}
-
-.comment-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  margin-bottom: 0.25rem;
-}
-
-.required {
-  color: #ef4444;
-}
-
-.form-input, .form-textarea {
-  width: 100%;
-  border-radius: 0.25rem;
-  color: var(--text-color);
-  border: 1px solid var(--button-border-color);
-  font-size: 0.875rem;
-  background: transparent;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-.form-input::placeholder,
-.form-textarea::placeholder {
-  color: color-mix(in srgb, var(--text-color) 50%, transparent);
-}
-
-.form-input:focus, .form-textarea:focus {
-  outline: none;
-  border-color: var(--link-color);
-}
-
-.form-input {
-  padding: 0.5rem;
-}
-
-.form-textarea {
-  padding: 0.75rem;
-  min-height: 100px;
-  resize: vertical;
-}
-
-.textarea-footer {
-  text-align: right;
-  font-size: 0.875rem;
-  color: color-mix(in srgb, var(--text-color) 80%, transparent);
-  margin-top: 0.25rem;
-}
-
-.error-text {
-  color: #ef4444;
-  margin-left: 0.5rem;
-}
-
-.form-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.btn-submit {
-  border-radius: 0.25rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  font-family: inherit;
-  color: var(--text-color);
-  border: 1px solid var(--button-border-color);
-  background: transparent;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-submit:hover {
-  background-color: var(--button-hover-bg-color);
-}
-
-.comments-count {
-  color: var(--text-color);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.status-message {
-  color: var(--text-color);
-  text-align: center;
-}
-
-.status-message.error {
-  color: #ef4444;
-}
-
-.load-more-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 1.5rem;
-}
-
-.btn-load-more {
-  background: none;
-  border: none;
-  color: #4f46e5;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.btn-load-more:hover {
-  text-decoration: underline;
-}
-</style>

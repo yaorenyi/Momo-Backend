@@ -26,5 +26,6 @@ export interface Translation {
         characters: string;
         words: string;
         contentTooLong: string;
+        replyTo: string;
     },
 }
