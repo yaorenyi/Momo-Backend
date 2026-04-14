@@ -15,7 +15,7 @@ func GetCravatar(email string) string {
 	hashHex := hex.EncodeToString(hash[:])
 
 	// avatar 地址
-	avatarURL := fmt.Sprintf("https://avatar.motues.top/avatar?name=%s&mode=cravatar&variant=beam", hashHex)
+	avatarURL := fmt.Sprintf("https://open.motues.top/avatar?name=%s&mode=cravatar&variant=beam", hashHex)
 
 	return avatarURL
 }

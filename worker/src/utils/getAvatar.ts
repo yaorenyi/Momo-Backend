@@ -10,7 +10,7 @@ export const getCravatar = async (email: string): Promise<string> => {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-  const avatarUrl = `https://avatar.motues.top/avatar?name=${hashHex}&mode=cravatar&variant=beam`;
+  const avatarUrl = `https://open.motues.top/avatar?name=${hashHex}&mode=cravatar&variant=beam`;
 
   return avatarUrl;
 };

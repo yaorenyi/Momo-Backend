@@ -43,7 +43,7 @@ const getGithubAvatar = async (author: string): Promise<string | undefined> => {
 const getCravatar = async ( email: string ): Promise<string> => {
   const cleanEmail = email.toLowerCase().trim();
   const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
-  const avatarUrl = `https://avatar.motues.top/avatar?name=${hash}&mode=cravatar&variant=beam`;
+  const avatarUrl = `https://open.motues.top/avatar?name=${hash}&mode=cravatar&variant=beam`;
 
   return avatarUrl;
 };
