@@ -43,22 +43,9 @@ const getGithubAvatar = async (author: string): Promise<string | undefined> => {
 const getCravatar = async ( email: string ): Promise<string> => {
   const cleanEmail = email.toLowerCase().trim();
   const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
-  const cravatarUrl = `https://cravatar.cn/avatar/${hash}?s=200&d=retro`;
+  const avatarUrl = `https://avatar.motues.top/avatar?name=${hash}&mode=cravatar&variant=beam`;
 
-  try {
-    // 检查响应头，判断是否为默认头像
-    const response = await fetch(cravatarUrl, { method: 'HEAD' });
-    const isDefault = response.headers.get('avatar-from') === 'default';
-
-    if (isDefault) {
-      return `https://avatar.motues.top/avatar?variant=beam&name=${hash}&colors=FFADAD,FFD6A5,FDFFB6,FF9900,AABBCC`;
-    }
-
-    return cravatarUrl;
-  } catch (error) {
-    console.error('Cravatar fetch error:', error);
-    return cravatarUrl;
-  }
+  return avatarUrl;
 };
 
 // 获取 QQ 头像的辅助函数
