@@ -34,8 +34,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ElMessage } from 'element-plus';
 import request from '../utils/request';
+import toast from '../utils/toast';
 import AdminLayout from '../components/AdminLayout.vue';
 import CommentList from '../components/CommentList.vue';
 
@@ -67,7 +67,7 @@ const fetchComments = async (page = 1) => {
       pagination.value = res.data.pagination;
     }
   } catch (error) {
-    ElMessage.error('加载失败');
+    toast.error('加载失败');
   } finally {
     loading.value = false;
   }
@@ -82,10 +82,10 @@ const switchFilter = (status) => {
 const updateStatus = async (id, status) => {
   try {
     await request.put(`/admin/comments/status?id=${id}&status=${status}`);
-    ElMessage.success('操作成功');
+    toast.success('操作成功');
     fetchComments(pagination.value.page);
   } catch (error) {
-    ElMessage.error('更新失败');
+    toast.error('更新失败');
   }
 };
 

@@ -99,7 +99,7 @@ func (h *CommentHandler) ListAllComments(c *gin.Context) {
 	// 4. 构造响应数据 (处理时间格式及字段映射)
 	// 假设 AdminCommentResponse 是为了匹配文档定义的 JSON 标签
 
-	respComments := make([]model.AdminCommentResponse, 0)
+	respComments := make([]model.AdminCommentResponse, 0, len(comments))
 	for _, comm := range comments {
 		respComments = append(respComments, model.AdminCommentResponse{
 			ID:          comm.ID,

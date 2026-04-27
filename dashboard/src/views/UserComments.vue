@@ -151,8 +151,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ElMessage } from 'element-plus';
 import request from '../utils/request';
+import toast from '../utils/toast';
 import AdminLayout from '../components/AdminLayout.vue';
 import CommentDetailModal from '../components/CommentDetailModal.vue';
 
@@ -169,7 +169,7 @@ const selectedComment = ref({});
 
 const fetchComments = async (page = 1) => {
   if (!author.value || !email.value) {
-    ElMessage.error('缺少用户信息');
+    toast.error('缺少用户信息');
     router.push('/users');
     return;
   }
@@ -183,7 +183,7 @@ const fetchComments = async (page = 1) => {
       pagination.value = res.data.pagination;
     }
   } catch (error) {
-    ElMessage.error('加载评论失败');
+    toast.error('加载评论失败');
   } finally {
     loading.value = false;
   }
@@ -192,10 +192,10 @@ const fetchComments = async (page = 1) => {
 const updateStatus = async (id, status) => {
   try {
     await request.put(`/admin/comments/status?id=${id}&status=${status}`);
-    ElMessage.success('操作成功');
+    toast.success('操作成功');
     fetchComments(pagination.value.page);
   } catch (error) {
-    ElMessage.error('更新失败');
+    toast.error('更新失败');
   }
 };
 

@@ -72,8 +72,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import request from '../utils/request'
+import toast from '../utils/toast'
 
 const router = useRouter()
 const loading = ref(false)
@@ -87,7 +87,7 @@ const form = reactive({
 const handleLogin = async () => {
   // 基础表单验证
   if (!form.apiUrl || !form.name || !form.password) {
-    ElMessage.warning('请完整填写登录信息')
+    toast.warning('请完整填写登录信息')
     return
   }
 
@@ -103,7 +103,7 @@ const handleLogin = async () => {
     const res = await request.post('/admin/login', payload)
     
     if (res.code === 200) {
-      ElMessage.success('登录成功')
+      toast.success('登录成功')
       localStorage.setItem('token', res.token)
       router.push('/')
     }

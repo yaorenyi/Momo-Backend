@@ -100,8 +100,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
 import request from '../utils/request';
+import toast from '../utils/toast';
 import AdminLayout from '../components/AdminLayout.vue';
 
 const router = useRouter();
@@ -119,7 +119,7 @@ const fetchUsers = async (page = 1) => {
       pagination.value = res.data.pagination;
     }
   } catch (error) {
-    ElMessage.error('加载用户列表失败');
+    toast.error('加载用户列表失败');
   } finally {
     loading.value = false;
   }

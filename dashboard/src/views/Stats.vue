@@ -116,10 +116,15 @@
 <script setup>
 import { ref, onMounted, nextTick, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import * as echarts from 'echarts';
+import { init, use } from 'echarts/core';
+import { PieChart, BarChart } from 'echarts/charts';
+import { TooltipComponent, GridComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import toast from '../utils/toast';
 import request from '../utils/request';
 import AdminLayout from '../components/AdminLayout.vue';
+
+use([PieChart, BarChart, TooltipComponent, GridComponent, CanvasRenderer]);
 
 const router = useRouter();
 const loading = ref(false);
@@ -149,7 +154,7 @@ const fetchStats = async (silent = false) => {
     initCharts();
   } catch (error) {
     if (!silent) loading.value = false;
-    if (!silent) ElMessage.error('加载统计数据失败');
+    if (!silent) toast.error('加载统计数据失败');
   }
 };
 
@@ -157,7 +162,7 @@ const initCharts = () => {
   // Status distribution pie chart
   if (statusChartRef.value) {
     if (statusChart) statusChart.dispose();
-    statusChart = echarts.init(statusChartRef.value);
+    statusChart = init(statusChartRef.value);
     const sd = stats.value.statusDistribution;
     statusChart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -180,7 +185,7 @@ const initCharts = () => {
   // Recent 7 days trend bar chart
   if (trendChartRef.value) {
     if (trendChart) trendChart.dispose();
-    trendChart = echarts.init(trendChartRef.value);
+    trendChart = init(trendChartRef.value);
     const dates = stats.value.recentComments.map(d => d.date.slice(5));
     const counts = stats.value.recentComments.map(d => d.count);
     trendChart.setOption({

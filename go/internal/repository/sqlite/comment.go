@@ -73,7 +73,8 @@ func (r *commentRepo) Create(ctx context.Context, c *model.Comment) error {
 
 func (r *commentRepo) GetByPostSlug(ctx context.Context, slug string) ([]*model.Comment, error) {
 	var comments []*model.Comment
-	query := `SELECT * FROM Comment WHERE post_slug = ? AND status = 'approved' ORDER BY pub_date ASC`
+	query := `SELECT id, pub_date, author, email, url, content_text, content_html, parent_id, os, browser, device
+		FROM Comment WHERE post_slug = ? AND status = 'approved' ORDER BY pub_date ASC`
 	err := r.db.SelectContext(ctx, &comments, query, slug)
 	return comments, err
 }

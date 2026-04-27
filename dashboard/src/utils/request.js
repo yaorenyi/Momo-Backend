@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import toast from './toast'
 import router from '../router'
 
 const service = axios.create({
@@ -33,12 +33,12 @@ service.interceptors.response.use(
     if (res.code && res.code !== 200) {
       // Token 失效或登录过期
       if (res.code === 401) {
-        ElMessage.error('登录已过期或凭证无效，请重新登录')
+        toast.error('登录已过期或凭证无效，请重新登录')
         localStorage.removeItem('token')
         router.push('/login')
         return Promise.reject(error)
       }
-      ElMessage.error(res.message || 'Error')
+      toast.error(res.message || 'Error')
       return Promise.reject(new Error(res.message || 'Error'))
     }
     return res
@@ -51,17 +51,17 @@ service.interceptors.response.use(
       if (res.code && res.code !== 400) {
         // Token 失效或登录过期
         if (res.code === 401) {
-          ElMessage.error('登录已过期或凭证无效，请重新登录')
+          toast.error('登录已过期或凭证无效，请重新登录')
           localStorage.removeItem('token')
           router.push('/login')
           return Promise.reject(error)
         }
-        ElMessage.error(res.message || 'Error')
+        toast.error(res.message || 'Error')
         return Promise.reject(error)
       }
       // 如果 code 是 400，按照错误处理（登录过期）
       if (res.code === 400 || error.response.status === 401) {
-        ElMessage.error('登录已过期或凭证无效，请重新登录')
+        toast.error('登录已过期或凭证无效，请重新登录')
         localStorage.removeItem('token')
         router.push('/login')
         return Promise.reject(error)
@@ -69,7 +69,7 @@ service.interceptors.response.use(
     }
     
     // 其他错误情况
-    ElMessage.error(error.message || '网络或接口错误，请检查 API 地址是否正确')
+    toast.error(error.message || '网络或接口错误，请检查 API 地址是否正确')
     return Promise.reject(error)
   }
 )
