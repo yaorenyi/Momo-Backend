@@ -78,10 +78,10 @@ import request from '../utils/request'
 const router = useRouter()
 const loading = ref(false)
 
-const form = reactive({ 
-  apiUrl: window.location.origin, 
-  name: '', 
-  password: '' 
+const form = reactive({
+  apiUrl: localStorage.getItem('apiUrl') || window.location.origin,
+  name: '',
+  password: ''
 })
 
 const handleLogin = async () => {

@@ -1,6 +1,6 @@
 import Router from"@koa/router";
 import { getCommentBySlug, postComment } from "../api/index" // public
-import { getAllComments, changeCommentStatus, login } from "../api/index" // admin
+import { getAllComments, changeCommentStatus, login, getStatsOverview, getUserList, getUserComments } from "../api/index" // admin
 import fs from "fs";
 import path from "path";
 
@@ -13,6 +13,10 @@ router.post("/api/comments", postComment);
 router.get("/admin/comments/list", getAllComments);
 router.put("/admin/comments/status", changeCommentStatus);
 router.post("/admin/login", login);
+
+router.get("/admin/stats/overview", getStatsOverview);
+router.get("/admin/stats/users", getUserList);
+router.get("/admin/stats/users/comments", getUserComments);
 
 router.get("/*all", async (ctx) => {
   ctx.type = "text/html";

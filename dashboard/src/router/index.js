@@ -1,16 +1,34 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { 
-    path: '/login', 
-    name: 'Login', 
-    component: () => import('../views/Login.vue') // 懒加载
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue')
   },
-  { 
-    path: '/', 
-    name: 'Dashboard', 
-    component: () => import('../views/Dashboard.vue'), // 懒加载
-    meta: { requiresAuth: true } 
+  {
+    path: '/',
+    name: 'Stats',
+    component: () => import('../views/Stats.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/comments',
+    name: 'Comments',
+    component: () => import('../views/Dashboard.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: () => import('../views/Users.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/user-comments',
+    name: 'UserComments',
+    component: () => import('../views/UserComments.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -19,7 +37,6 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫：检查 Token
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   if (to.meta.requiresAuth && !token) {

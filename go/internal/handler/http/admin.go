@@ -64,7 +64,7 @@ func (h *CommentHandler) Login(c *gin.Context) {
 }
 
 func (h *CommentHandler) ListAllComments(c *gin.Context) {
-	// 1. 解析分页参数
+	// 1. 解析分页参数和状态筛选
 	pageStr := c.DefaultQuery("page", "1")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
@@ -75,12 +75,12 @@ func (h *CommentHandler) ListAllComments(c *gin.Context) {
 		return
 	}
 
+	status := c.DefaultQuery("status", "")
 	limit := 10
 	offset := (page - 1) * limit
 
 	// 2. 从 Repo 调用获取数据
-	// 注意：此处的 comments 应该是包含 Device, Browser, IPAddress 等字段的结构体
-	comments, total, err := h.Repo.List(c.Request.Context(), offset, limit)
+	comments, total, err := h.Repo.List(c.Request.Context(), offset, limit, status)
 	if err != nil {
 		log.Printf("[ERROR] Failed to list comments: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -149,5 +149,108 @@ func (h *CommentHandler) UpdateCommentStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Comment status updated",
+	})
+}
+
+// GetStatsOverview 统计概览
+func (h *CommentHandler) GetStatsOverview(c *gin.Context) {
+	stats, err := h.Repo.GetStatsOverview(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to fetch stats",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Stats fetched successfully",
+		"data":    stats,
+	})
+}
+
+// GetUserList 用户列表
+func (h *CommentHandler) GetUserList(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "Invalid query parameters"})
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "20")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+
+	offset := (page - 1) * limit
+	users, total, err := h.Repo.GetUserList(c.Request.Context(), offset, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "Failed to fetch users"})
+		return
+	}
+
+	totalPage := int64((total + int64(limit) - 1) / int64(limit))
+	if total == 0 {
+		totalPage = 0
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Users fetched successfully",
+		"data": gin.H{
+			"users": users,
+			"pagination": gin.H{
+				"page":      page,
+				"limit":     limit,
+				"totalPage": totalPage,
+			},
+		},
+	})
+}
+
+// GetUserComments 获取指定用户的评论
+func (h *CommentHandler) GetUserComments(c *gin.Context) {
+	author := c.Query("author")
+	email := c.Query("email")
+	if author == "" || email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "author and email are required"})
+		return
+	}
+
+	pageStr := c.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "Invalid query parameters"})
+		return
+	}
+
+	limit := 10
+	offset := (page - 1) * limit
+
+	comments, total, err := h.Repo.GetUserComments(c.Request.Context(), author, email, offset, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "Failed to fetch comments"})
+		return
+	}
+
+	totalPage := int64((total + int64(limit) - 1) / int64(limit))
+	if total == 0 {
+		totalPage = 0
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "User comments fetched successfully",
+		"data": gin.H{
+			"comments": comments,
+			"pagination": gin.H{
+				"page":      page,
+				"limit":     limit,
+				"totalPage": totalPage,
+			},
+		},
 	})
 }

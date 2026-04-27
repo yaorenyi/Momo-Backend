@@ -9,6 +9,9 @@ import { postComment } from './api/public/postComment'
 import { adminLogin } from './api/admin/login'
 import { listComments } from './api/admin/listComments'
 import { updateStatus } from './api/admin/updateStatus'
+import { statsOverview } from './api/admin/statsOverview'
+import { userList } from './api/admin/userList'
+import { userComments } from './api/admin/userComments'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -26,5 +29,8 @@ app.post('/admin/login', adminLogin)
 app.use('/admin/*', adminAuth)
 app.get('/admin/comments/list', listComments);
 app.put('/admin/comments/status', updateStatus);
+app.get('/admin/stats/overview', statsOverview);
+app.get('/admin/stats/users', userList);
+app.get('/admin/stats/users/comments', userComments);
 
 export default app
