@@ -18,10 +18,14 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
       code: 400,
       message: "Time limit exceeded"
     };
-    return; 
+    return;
   }
-  // 创建评论
-    const content = checkContent(data.content), author = checkContent(data.author);
+  // 对所有用户输入进行 XSS 检查
+    const content = checkContent(data.content);
+    const author = checkContent(data.author);
+    const url = checkContent(data.url || '');
+    const postTitle = checkContent(data.post_title || '');
+    const postUrl = checkContent(data.post_url || '');
     const uaParser = new UAParser(ctx.request.header['user-agent'] ?? "");
     const uaResult = uaParser.getResult();
     const commentData: CreateCommentInput = {
@@ -29,7 +33,7 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
       post_slug: data.post_slug,
       author: author,
       email: data.email,
-      url: data.url,
+      url: url,
       ip_address: ip,
       os: (uaResult.os.name || "") + " " + (uaResult.os.version || ""),
       browser: (uaResult.browser.name || "") + " " + (uaResult.browser.version || ""),
@@ -50,18 +54,18 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
           await sendCommentReplyNotification({
             toEmail: parentComment.email,
             toName: parentComment.author,
-            postTitle: data.post_title,
+            postTitle: postTitle,
             parentComment: parentComment.content_text,
             replyAuthor: author,
             replyContent: content,
-            postUrl: data.post_url,
+            postUrl: postUrl,
           });
         }
       } else {
         LogService.info("New comment", { Name: comment.author, Email: comment.email})
         await sendCommentNotification({
-          postTitle: data.post_title,
-          postUrl: data.post_url,
+          postTitle: postTitle,
+          postUrl: postUrl,
           commentAuthor: author,
           commentContent: content
         });

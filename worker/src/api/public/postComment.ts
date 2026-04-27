@@ -4,9 +4,20 @@ import { Bindings } from '../../bindings';
 import { sendCommentNotification, sendCommentReplyNotification } from '../../utils/email';
 import { parseMarkdown } from '../../utils/markdown';
 
-// 检查内容，将<script>标签之间的内容删除
+// 检查内容，删除 XSS 攻击脚本
 export function checkContent(content: string): string {
-    return content.replace(/<script[\s\S]*?<\/script>/g, "");
+    return content
+        // Remove script/style blocks and their content
+        .replace(/<(?:script|style)[\s\S]*?<\/(?:script|style)>/gi, '')
+        // Remove event handler attributes (onclick, onerror, onload, etc.)
+        .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        // Remove javascript: and vbscript: links in href/src/action
+        .replace(/(?:href|src|action|formaction)\s*=\s*"(?:javascript|vbscript):[^"]*"/gi, '')
+        .replace(/(?:href|src|action|formaction)\s*=\s*'(?:javascript|vbscript):[^']*'/gi, '')
+        // Remove standalone javascript: and vbscript: protocol
+        .replace(/^(?:javascript|vbscript):\s*/gi, '')
+        // Remove dangerous embedding tags
+        .replace(/<\/?(?:iframe|object|embed|frame|meta|link|base|form|input)\b[^>]*>/gi, '');
 }
 
 export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
@@ -29,9 +40,12 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
     }
   }
 
-  // 3. 准备数据
+  // 3. 准备数据 - 对所有用户输入进行 XSS 检查
   const content = checkContent(data.content);
   const author = checkContent(data.author);
+  const url = checkContent(data.url || '');
+  const postTitle = checkContent(data.post_title || '');
+  const postUrl = checkContent(data.post_url || '');
   const uaParser = new UAParser(userAgent);
   const uaResult = uaParser.getResult();
 
@@ -48,7 +62,7 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
       data.post_slug,
       author,
       data.email,
-      data.url || null,
+      url,
       ip,
       `${uaResult.os.name || ""} ${uaResult.os.version || ""}`.trim(),
       `${uaResult.browser.name || ""} ${uaResult.browser.version || ""}`.trim(),
@@ -77,18 +91,18 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
               await sendCommentReplyNotification(c.env, {
                 toEmail: parentComment.email,
                 toName: parentComment.author,
-                postTitle: data.post_title,
+                postTitle: postTitle,
                 parentComment: parentComment.content_text,
                 replyAuthor: author,
                 replyContent: content,
-                postUrl: data.post_url,
+                postUrl: postUrl,
               });
             }
           } else {
             // 新评论通知站长
             await sendCommentNotification(c.env, {
-              postTitle: data.post_title,
-              postUrl: data.post_url,
+              postTitle: postTitle,
+              postUrl: postUrl,
               commentAuthor: author,
               commentContent: content
             });

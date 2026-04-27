@@ -16,9 +16,20 @@ export async function canPostComment(ip: string): Promise<boolean> {
     return Date.now() - comment.pub_date.getTime() > 60 * 1000;
 }
 
-// 检查内容，将<script>标签之间的内容删除
+// 检查内容，删除 XSS 攻击脚本
 export function checkContent(content: string): string {
-    return content.replace(/<script[\s\S]*?<\/script>/g, "");
+    return content
+        // Remove script/style blocks and their content
+        .replace(/<(?:script|style)[\s\S]*?<\/(?:script|style)>/gi, '')
+        // Remove event handler attributes (onclick, onerror, onload, etc.)
+        .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        // Remove javascript: and vbscript: links in href/src/action
+        .replace(/(?:href|src|action|formaction)\s*=\s*"(?:javascript|vbscript):[^"]*"/gi, '')
+        .replace(/(?:href|src|action|formaction)\s*=\s*'(?:javascript|vbscript):[^']*'/gi, '')
+        // Remove standalone javascript: and vbscript: protocol
+        .replace(/^(?:javascript|vbscript):\s*/gi, '')
+        // Remove dangerous embedding tags
+        .replace(/<\/?(?:iframe|object|embed|frame|meta|link|base|form|input)\b[^>]*>/gi, '');
 }
 
 // 生成基于用户名和时间的临时密钥

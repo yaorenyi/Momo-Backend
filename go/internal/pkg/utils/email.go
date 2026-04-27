@@ -84,7 +84,7 @@ func (s *EmailService) SendCommentReplyNotification(
         <strong>%s</strong> 回复了你在 <span style="color: #007acc;">《%s》</span> 中的评论：
       </p>
 
-      <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #777; font-style: italic; font-size: 14px;">
+      <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #555; font-size: 14px;">
         %s
       </div>
 

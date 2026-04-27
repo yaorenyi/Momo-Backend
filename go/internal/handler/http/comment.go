@@ -47,21 +47,28 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 		deviceStr = "Desktop"
 	}
 
-	// 2. 构造数据库模型
+	// 2. 对所有用户输入进行 XSS 检查
+	sanitizedContent := utils.CheckContent(req.Content)
+	sanitizedAuthor := utils.CheckContent(req.Author)
+	sanitizedURL := utils.CheckContent(req.URL)
+	sanitizedPostTitle := utils.CheckContent(req.PostTitle)
+	sanitizedPostURL := utils.CheckContent(req.PostURL)
+
+	// 3. 构造数据库模型
 	comment := &model.Comment{
 		PostSlug: req.PostSlug,
-		Author:   req.Author,
+		Author:   sanitizedAuthor,
 		Email:    req.Email,
 		URL: func() *string {
-			if req.URL != "" {
-				return &req.URL
+			if sanitizedURL != "" {
+				return &sanitizedURL
 			} else {
 				return nil
 			}
 		}(),
 		PubDate:     time.Now().UnixMilli(),
-		ContentText: req.Content,
-		ContentHTML: utils.ParseMarkdown(req.Content),
+		ContentText: sanitizedContent,
+		ContentHTML: utils.ParseMarkdown(sanitizedContent),
 		ParentID:    req.ParentID,
 		IPAddress:   ptrString(utils.GetClientIP(c)),
 		Device:      ptrString(deviceStr),
@@ -71,7 +78,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 		Status:      "approved",
 	}
 
-	// 3. 写入数据库
+	// 4. 写入数据库
 	if err := h.Repo.Create(c.Request.Context(), comment); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -98,11 +105,11 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 					err = utils.GetService().SendCommentReplyNotification(
 						parentComment.Email,
 						parentComment.Author,
-						req.PostTitle,
+						sanitizedPostTitle,
 						parentComment.ContentText,
-						req.Author,
-						req.Content,
-						req.PostURL,
+						sanitizedAuthor,
+						sanitizedContent,
+						sanitizedPostURL,
 					)
 					if err != nil {
 						log.Printf("Failed to send reply notification: %v", err)
@@ -112,10 +119,10 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 				}
 			} else {
 				err := utils.GetService().SendCommentNotification(
-					req.PostTitle,
-					req.PostURL,
-					req.Author,
-					req.Content,
+					sanitizedPostTitle,
+					sanitizedPostURL,
+					sanitizedAuthor,
+					sanitizedContent,
 				)
 				if err != nil {
 					log.Printf("Failed to send admin notification: %v", err)

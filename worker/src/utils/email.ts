@@ -62,7 +62,7 @@ export async function sendCommentReplyNotification(
             <p style="color: #555; line-height: 1.6;">
               <strong>${replyAuthor}</strong> 回复了你在 <span style="color: #007acc;">《${postTitle}》</span> 中的评论：
             </p>
-            <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #777; font-style: italic; font-size: 14px;">
+            <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #555; font-size: 14px;">
               ${parentComment}
             </div>
             <p style="color: #333; font-weight: bold; margin-bottom: 8px;">最新回复：</p>
@@ -116,7 +116,7 @@ export async function sendCommentNotification(
               </div>
             </div>
             <div style="text-align: center;">
-              <a href="${postUrl}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px;">
+              <a href="${postUrl}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px; transition: all 0.3s ease;">
                 立即前往查看
               </a>
             </div>
