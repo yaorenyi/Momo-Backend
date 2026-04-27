@@ -65,11 +65,18 @@
   }
 
   function isValidHtml(str: string): boolean {
-    if (!str.includes('<') || !str.includes('>')) return false;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(str, 'text/html');
     
-    const tagRegex = /<([a-z][a-z0-9]*)\b[^>]*>(.*?)<\/\1>/i;
-    return tagRegex.test(str);
-  }
+    // 检查解析过程中是否产生了 parsererror 节点
+    // 或者检查 body 中是否有子节点
+    const errorNode = doc.querySelector('parsererror');
+    if (errorNode) return false;
+
+    // 只要 body 里面有元素，说明解析出了 HTML 结构
+    console.log('result', doc.body.childNodes);
+    return doc.body.childNodes.length > 0;
+}
   function flattenRepliesWithParent(replies: any[], pName: string, pId: any): any[] {
     if (!replies || !replies.length) return [];
     let res: any[] = [];
@@ -137,9 +144,9 @@
       <span class="text-sm text-[var(--text-color)]/70">{formatFullDate(new Date(c.pubDate), language)}</span>
     </div>
 
-    <div class="text-[var(--text-color)] mt-1 leading-relaxed w-full max-w-full min-w-0 text-sm">
+    <div class="text-[var(--text-color)] mt-1 leading-relaxed w-full max-w-full min-w-0 text-sm markdown-content">
       {#if c.contentHtml && typeof c.contentHtml === 'string' && isValidHtml(c.contentHtml)}
-        <div innerHTML={c.contentHtml} class="break-words w-full max-w-full"></div>
+        <div class="break-words w-full max-w-full">{@html c.contentHtml}</div>
       {:else if c.contentText && typeof c.contentText === 'string' && c.contentText.trim() !== ''}
         <p class="break-words whitespace-pre-wrap overflow-hidden w-full max-w-full min-w-0">
           {c.contentText}
@@ -198,16 +205,19 @@
             <div>
               <label for="reply-author-{c.id}" class="block text-xs text-[var(--text-color)] mb-1">{t('comments.name')}<span class="text-red-500">*</span></label>
               <input id="reply-author-{c.id}" type="text" placeholder={t('comments.required')} bind:value={replyAuthor}
+                on:input={() => dispatch('userInfoChange', { author: replyAuthor, email: replyEmail, url: replyUrl })}
                 class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)] focus:outline-none focus:border-[var(--link-color)] text-sm py-1 px-2" />
             </div>
             <div>
               <label for="reply-email-{c.id}" class="block text-xs text-[var(--text-color)] mb-1">{t('comments.email')}<span class="text-red-500">*</span></label>
               <input id="reply-email-{c.id}" type="email" placeholder={t('comments.required')} bind:value={replyEmail}
+                on:input={() => dispatch('userInfoChange', { author: replyAuthor, email: replyEmail, url: replyUrl })}
                 class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)] focus:outline-none focus:border-[var(--link-color)] text-sm py-1 px-2" />
             </div>
             <div>
               <label for="reply-url-{c.id}" class="block text-xs text-[var(--text-color)] mb-1">{t('comments.site')}</label>
               <input id="reply-url-{c.id}" type="url" placeholder={t('comments.optional')} bind:value={replyUrl}
+                on:input={() => dispatch('userInfoChange', { author: replyAuthor, email: replyEmail, url: replyUrl })}
                 class="rounded w-full text-[var(--text-color)] border border-[var(--button-border-color)] focus:outline-none focus:border-[var(--link-color)] text-sm py-1 px-2" />
             </div>
           </div>
@@ -252,10 +262,11 @@
               {language} 
               depth={depth + 1}
               isFlattened={false}
-              on:reply={(e) => dispatch('reply', e.detail)} 
+              on:reply={(e) => dispatch('reply', e.detail)}
               on:submit={(e) => dispatch('submit', e.detail)}
               on:cancel={() => dispatch('cancel')}
-              replyingToId={replyingToId} 
+              replyingToId={replyingToId}
+              on:userInfoChange={(e) => dispatch('userInfoChange', e.detail)}
             />
           </div>
         {/each}
@@ -264,21 +275,22 @@
       {#if depth === 0 && mobileFlattenedReplies.length > 0}
         {#each mobileFlattenedReplies as flatReply}
           <div class="w-full max-w-full overflow-hidden mt-4 ">
-            <CommentItem 
-              c={flatReply} 
-              {postSlug} 
-              {author} 
-              {email} 
-              {apiUrl} 
+            <CommentItem
+              c={flatReply}
+              {postSlug}
+              {author}
+              {email}
+              {apiUrl}
               {language}
               depth={1}
               isFlattened={true}
               parentAuthorName={flatReply._parentName}
               parentCommentId={flatReply._parentId}
-              on:reply={(e) => dispatch('reply', e.detail)} 
+              on:reply={(e) => dispatch('reply', e.detail)}
               on:submit={(e) => dispatch('submit', e.detail)}
               on:cancel={() => dispatch('cancel')}
-              replyingToId={replyingToId} 
+              replyingToId={replyingToId}
+              on:userInfoChange={(e) => dispatch('userInfoChange', e.detail)}
             />
           </div>
         {/each}
@@ -288,3 +300,88 @@
 
   </div>
 </div>
+
+<style>
+  .markdown-content :global(h1),
+  .markdown-content :global(h2),
+  .markdown-content :global(h3),
+  .markdown-content :global(h4) {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .markdown-content :global(h1) { font-size: 1.5rem; }
+  .markdown-content :global(h2) { font-size: 1.25rem; }
+  .markdown-content :global(h3) { font-size: 1.1rem; }
+  .markdown-content :global(p) { margin-bottom: 0.5rem; }
+  .markdown-content :global(ul),
+  .markdown-content :global(ol) {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+  }
+  .markdown-content :global(ul) { list-style-type: disc; }
+  .markdown-content :global(ol) { list-style-type: decimal; }
+  .markdown-content :global(li) { margin-bottom: 0.25rem; }
+  .markdown-content :global(blockquote) {
+    border-left: 3px solid var(--link-color, #6366f1);
+    padding-left: 0.75rem;
+    margin: 0.5rem 0;
+    opacity: 0.85;
+  }
+  .markdown-content :global(pre) {
+    background: rgba(0,0,0,0.08);
+    border-radius: 4px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+  }
+  .markdown-content :global(code) {
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.85rem;
+    font-family: monospace;
+  }
+  .markdown-content :global(pre code) {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+  }
+  .markdown-content :global(a) {
+    color: var(--link-color, #6366f1);
+    text-decoration: underline;
+  }
+  .markdown-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+  }
+  .markdown-content :global(hr) {
+    border: none;
+    border-top: 1px solid var(--button-border-color, #ddd);
+    margin: 1rem 0;
+  }
+  .markdown-content :global(table) {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+  .markdown-content :global(th),
+  .markdown-content :global(td) {
+    border: 1px solid var(--button-border-color, #ddd);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+  }
+  .markdown-content :global(th) {
+    font-weight: 600;
+    background: rgba(0,0,0,0.04);
+  }
+  .markdown-content :global(del) {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+</style>

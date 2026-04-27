@@ -61,7 +61,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 		}(),
 		PubDate:     time.Now().UnixMilli(),
 		ContentText: req.Content,
-		ContentHTML: req.Content, // 建议：此处可接入 blackfriday 等库转 HTML
+		ContentHTML: utils.ParseMarkdown(req.Content),
 		ParentID:    req.ParentID,
 		IPAddress:   ptrString(utils.GetClientIP(c)),
 		Device:      ptrString(deviceStr),

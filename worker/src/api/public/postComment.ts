@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { UAParser } from 'ua-parser-js';
 import { Bindings } from '../../bindings';
 import { sendCommentNotification, sendCommentReplyNotification } from '../../utils/email';
+import { parseMarkdown } from '../../utils/markdown';
 
 // 检查内容，将<script>标签之间的内容删除
 export function checkContent(content: string): string {
@@ -54,7 +55,7 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
       uaResult.device.model || uaResult.device.type || "Desktop",
       userAgent,
       content,
-      content, // content_html 保持一致
+      parseMarkdown(content),
       data.parent_id || null,
       "approved" // 或者从环境变量读取默认状态
     ).run();
