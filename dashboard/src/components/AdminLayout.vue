@@ -42,6 +42,12 @@
           <i class="fa-solid fa-users w-5 mr-3"></i>
           <span class="font-medium">用户列表</span>
         </router-link>
+        <router-link to="/settings" @click="closeMobileMenu"
+          :class="['flex items-center px-3 py-2.5 rounded-lg group transition-colors',
+            isActive('/settings') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100']">
+          <i class="fa-solid fa-sliders w-5 mr-3"></i>
+          <span class="font-medium">系统设置</span>
+        </router-link>
       </nav>
 
       <div class="p-4 border-t text-[10px] uppercase tracking-widest text-center border-gray-200 text-gray-500">
@@ -107,6 +113,7 @@ const isActive = (path) => {
   if (path === '/') return route.path === '/';
   if (path === '/comments') return route.path.startsWith('/comments');
   if (path === '/users') return route.path.startsWith('/users');
+  if (path === '/settings') return route.path.startsWith('/settings');
   return route.path.startsWith(path);
 };
 
@@ -115,7 +122,8 @@ const pageTitle = computed(() => {
     '/': '数据统计',
     '/comments': '评论列表',
     '/users': '用户列表',
-    '/user-comments': '用户评论'
+    '/user-comments': '用户评论',
+    '/settings': '系统设置'
   };
   return map[route.path] || '管理后台';
 });

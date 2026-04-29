@@ -66,6 +66,43 @@
         </div>
       </form>
     </div>
+
+    <!-- 修改默认密码弹窗 -->
+    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8">
+        <div class="text-center mb-6">
+          <div class="w-14 h-14 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-3">
+            <i class="fa-solid fa-shield-halved text-amber-600 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">首次登录安全提醒</h3>
+          <p class="text-sm text-gray-500 mt-2">
+            您正在使用默认用户名和密码，请立即修改以保护您的站点安全。
+          </p>
+        </div>
+
+        <form @submit.prevent="handleChangePassword" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">新用户名</label>
+            <input v-model="passwordForm.new_name" type="text" required
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+            <input v-model="passwordForm.new_password" type="password" required minlength="4"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+            <input v-model="passwordForm.confirm_password" type="password" required minlength="4"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+          </div>
+          <button type="submit" :disabled="changingPassword"
+            class="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-semibold">
+            {{ changingPassword ? '更新中...' : '立即更新' }}
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -77,12 +114,52 @@ import toast from '../utils/toast'
 
 const router = useRouter()
 const loading = ref(false)
+const showPasswordModal = ref(false)
+const changingPassword = ref(false)
 
 const form = reactive({
   apiUrl: localStorage.getItem('apiUrl') || window.location.origin,
   name: '',
   password: ''
 })
+
+const passwordForm = reactive({
+  new_name: '',
+  new_password: '',
+  confirm_password: ''
+})
+
+const handleChangePassword = async () => {
+  if (passwordForm.new_password !== passwordForm.confirm_password) {
+    toast.warning('两次输入的密码不一致')
+    return
+  }
+  if (passwordForm.new_password.length < 4) {
+    toast.warning('密码长度不能少于4位')
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    const res = await request.put('/admin/password', {
+      old_name: form.name,
+      old_password: form.password,
+      new_name: passwordForm.new_name,
+      new_password: passwordForm.new_password
+    })
+    if (res.code === 200) {
+      toast.success('管理员凭据已更新，请重新登录')
+      localStorage.removeItem('token')
+      showPasswordModal.value = false
+      form.name = ''
+      form.password = ''
+    }
+  } catch (e) {
+    console.error('Password change failed:', e)
+  } finally {
+    changingPassword.value = false
+  }
+}
 
 const handleLogin = async () => {
   // 基础表单验证
@@ -105,7 +182,12 @@ const handleLogin = async () => {
     if (res.code === 200) {
       toast.success('登录成功')
       localStorage.setItem('token', res.token)
-      router.push('/')
+      localStorage.setItem('admin_name', form.name)
+      if (res.needChangePassword) {
+        showPasswordModal.value = true
+      } else {
+        router.push('/')
+      }
     }
   } catch (error) {
     console.error('Login failed:', error)

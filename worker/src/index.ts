@@ -7,6 +7,8 @@ import { adminAuth } from './utils/auth'
 import { getComments } from './api/public/getComments'
 import { postComment } from './api/public/postComment'
 import { adminLogin } from './api/admin/login'
+import { getSettings, updateSettings, testEmail } from './api/admin/settings'
+import { changePassword } from './api/admin/password'
 import { listComments } from './api/admin/listComments'
 import { updateStatus } from './api/admin/updateStatus'
 import { statsOverview } from './api/admin/statsOverview'
@@ -27,6 +29,10 @@ app.post('/api/comments', postComment)
 
 app.post('/admin/login', adminLogin)
 app.use('/admin/*', adminAuth)
+app.get('/admin/settings', getSettings);
+app.put('/admin/settings', updateSettings);
+app.post('/admin/settings/test-email', testEmail);
+app.put('/admin/password', changePassword);
 app.get('/admin/comments/list', listComments);
 app.put('/admin/comments/status', updateStatus);
 app.get('/admin/stats/overview', statsOverview);

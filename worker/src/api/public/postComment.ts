@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { UAParser } from 'ua-parser-js';
 import { Bindings } from '../../bindings';
 import { sendCommentNotification, sendCommentReplyNotification } from '../../utils/email';
+import { isEmailEnabled } from '../../utils/settings';
 import { parseMarkdown } from '../../utils/markdown';
 
 // 检查内容，删除 XSS 攻击脚本
@@ -77,7 +78,7 @@ export const postComment = async (c: Context<{ Bindings: Bindings }>) => {
     if (!success) throw new Error("Database insert failed");
 
     // 5. 发送邮件通知 (后台异步执行，不阻塞用户响应)
-    if (c.env.EMAIL_USER && c.env.EMAIL_PASSWORD) {
+    if (await isEmailEnabled(c.env)) {
       console.log("Sending email notification...");
       c.executionCtx.waitUntil((async () => {
         try {

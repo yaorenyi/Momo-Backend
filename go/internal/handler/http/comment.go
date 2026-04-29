@@ -89,7 +89,7 @@ func (h *CommentHandler) PostComment(c *gin.Context) {
 
 	// 发送邮件通知
 
-	if utils.GetService().IsAvailable() {
+	if utils.GetService().IsAvailable() && utils.IsEmailEnabled() {
 		go func() {
 			// 创建独立的 context，避免受 HTTP 请求生命周期影响
 			ctx := context.Background()

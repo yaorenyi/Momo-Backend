@@ -1,4 +1,5 @@
 import CommentService   from "../orm/commentService"
+import { getSetting, DEFAULT_ADMIN_PASSWORD } from "./settings";
 import crypto from "crypto";
 
 // 存储临时密钥的Map，包含密钥和过期时间
@@ -33,14 +34,16 @@ export function checkContent(content: string): string {
 }
 
 // 生成基于用户名和时间的临时密钥
-export function generateTempKey(username: string): string {
+export async function generateTempKey(username: string): Promise<string> {
     const now = Date.now();
-    const data = `${username}-${now}-${process.env.ADMIN_PASSWORD}`;
+    const dbPass = await getSetting("admin_password");
+    const secret = dbPass || DEFAULT_ADMIN_PASSWORD;
+    const data = `${username}-${now}-${secret}`;
     const hash = crypto.createHash('sha256').update(data).digest('hex');
-    const expiresAt = now + 20 * 60 * 1000; // 5分钟后过期
-    
+    const expiresAt = now + 20 * 60 * 1000; // 20分钟后过期
+
     tempKeys.set(username, { key: hash, expiresAt });
-    
+
     return hash;
 }
 
@@ -79,8 +82,4 @@ export function extractToken(authHeader: string): string {
     
     // 否则直接返回 header 值
     return authHeader;
-}
-
-export function checkAdmin(name: string, password: string): boolean { 
-    return name === process.env.ADMIN_NAME && password === process.env.ADMIN_PASSWORD;
 }

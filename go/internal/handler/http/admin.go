@@ -2,7 +2,6 @@ package http
 
 import (
 	"log"
-	"momo-backend-go/internal/config"
 	"momo-backend-go/internal/model"
 	"momo-backend-go/internal/pkg/utils"
 	"net/http"
@@ -34,7 +33,7 @@ func (h *CommentHandler) Login(c *gin.Context) {
 	}
 
 	// 2. 验证凭据
-	if req.Name != config.GlobalConfig.AdminName || req.Password != config.GlobalConfig.AdminPassword {
+	if !utils.CheckAdminCredentials(req.Name, req.Password) {
 		isBlocked := utils.Limiter.RecordAttempt(ip)
 		log.Printf("[WARN] Login failed for IP: %s", ip)
 
@@ -56,10 +55,212 @@ func (h *CommentHandler) Login(c *gin.Context) {
 
 	// 生成密钥并按文档格式返回
 	tempKey := utils.GenerateTempKey(req.Name)
+	needChangePassword := utils.IsDefaultAdmin()
+	c.JSON(http.StatusOK, gin.H{
+		"code":               200,
+		"message":            "Login successful",
+		"token":              tempKey,
+		"needChangePassword": needChangePassword,
+	})
+}
+
+func (h *CommentHandler) GetSettings(c *gin.Context) {
+	all := utils.GetAllSettings()
+
+	sensitiveKeys := map[string]bool{
+		"admin_password": true,
+		"email_password": true,
+	}
+
+	allowedSettings := map[string]bool{
+		"site_name":            true,
+		"admin_email":          true,
+		"admin_name":           true,
+		"smtp_host":            true,
+		"smtp_port":            true,
+		"email_user":           true,
+		"email_password":       true,
+		"email_secure":         true,
+		"allow_origin":         true,
+		"email_enabled":        true,
+		"reply_template":       true,
+		"notification_template": true,
+	}
+
+	filtered := make(map[string]string)
+	for key := range allowedSettings {
+		if val, ok := all[key]; ok {
+			if sensitiveKeys[key] {
+				filtered[key] = ""
+			} else {
+				filtered[key] = val
+			}
+		}
+	}
+	if _, ok := filtered["email_enabled"]; !ok {
+		filtered["email_enabled"] = "true"
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
-		"message": "Login successful",
-		"token":   tempKey,
+		"message": "Settings fetched",
+		"data":    filtered,
+	})
+}
+
+func (h *CommentHandler) UpdateSettings(c *gin.Context) {
+	var body map[string]string
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	allowedSettings := map[string]bool{
+		"site_name":            true,
+		"admin_email":          true,
+		"admin_name":           true,
+		"smtp_host":            true,
+		"smtp_port":            true,
+		"email_user":           true,
+		"email_password":       true,
+		"email_secure":         true,
+		"allow_origin":         true,
+		"email_enabled":        true,
+		"reply_template":       true,
+		"notification_template": true,
+	}
+
+	for key := range body {
+		if !allowedSettings[key] {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    400,
+				"message": "Setting \"" + key + "\" is not allowed",
+			})
+			return
+		}
+	}
+
+	smtpChanged := body["smtp_host"] != "" || body["smtp_port"] != "" || body["email_user"] != "" || body["email_password"] != ""
+
+	for key, value := range body {
+		if err := utils.SetSetting(key, value); err != nil {
+			log.Printf("[ERROR] Failed to update setting %s: %v", key, err)
+		}
+	}
+
+	log.Printf("[INFO] Settings updated by admin: %v", body)
+	c.JSON(http.StatusOK, gin.H{
+		"code":        200,
+		"message":     "Settings updated",
+		"smtpChanged": smtpChanged,
+	})
+}
+
+func (h *CommentHandler) TestEmail(c *gin.Context) {
+	adminEmail := utils.GetSetting("admin_email")
+	if adminEmail == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "管理员邮箱未配置",
+		})
+		return
+	}
+
+	svc := utils.GetService()
+	if !svc.IsAvailable() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "SMTP 未配置，请先填写 SMTP 服务器信息",
+		})
+		return
+	}
+
+	if !utils.IsEmailEnabled() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "邮件通知功能已关闭，请先开启",
+		})
+		return
+	}
+
+	htmlContent := "<div style=\"font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #e1e4e8; border-radius: 8px;\">" +
+		"<h2 style=\"color: #333; margin-top: 0;\">SMTP 配置测试</h2>" +
+		"<p style=\"color: #555; line-height: 1.6;\">这是一封来自 <strong>" + svc.SiteName() + "</strong> 的测试邮件。</p>" +
+		"<p style=\"color: #555; line-height: 1.6;\">如果收到此邮件，说明 SMTP 配置正确，邮件通知功能可以正常使用。</p>" +
+		"<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">" +
+		"<p style=\"color: #999; font-size: 12px;\">此邮件由系统自动发送，请勿直接回复。</p></div>"
+
+	if err := svc.SendRaw(adminEmail, "SMTP 配置验证", htmlContent); err != nil {
+		log.Printf("[ERROR] Test email failed: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    400,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	log.Printf("[INFO] Test email sent to: %s", adminEmail)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "测试邮件已发送",
+	})
+}
+
+func (h *CommentHandler) ChangePassword(c *gin.Context) {
+	var req struct {
+		OldName     string `json:"old_name"`
+		OldPassword string `json:"old_password"`
+		NewName     string `json:"new_name"`
+		NewPassword string `json:"new_password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	if req.OldName == "" || req.OldPassword == "" || req.NewName == "" || req.NewPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "old_name, old_password, new_name, new_password are required",
+		})
+		return
+	}
+
+	if len(req.NewPassword) < 4 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "New password must be at least 4 characters",
+		})
+		return
+	}
+
+	if !utils.CheckAdminCredentials(req.OldName, req.OldPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    400,
+			"message": "Current credentials are incorrect",
+		})
+		return
+	}
+
+	if err := utils.ChangeAdminPassword(req.NewName, req.NewPassword); err != nil {
+		log.Printf("[ERROR] Failed to change password: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to update credentials",
+		})
+		return
+	}
+
+	log.Printf("[INFO] Admin credentials changed: %s -> %s", req.OldName, req.NewName)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Admin credentials updated successfully. Please login again.",
 	})
 }
 
@@ -97,8 +298,6 @@ func (h *CommentHandler) ListAllComments(c *gin.Context) {
 	}
 
 	// 4. 构造响应数据 (处理时间格式及字段映射)
-	// 假设 AdminCommentResponse 是为了匹配文档定义的 JSON 标签
-
 	respComments := make([]model.AdminCommentResponse, 0)
 	for _, comm := range comments {
 		respComments = append(respComments, model.AdminCommentResponse{

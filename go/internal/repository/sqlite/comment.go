@@ -47,6 +47,17 @@ func InitSchema(db *sqlx.DB) error {
 	CREATE INDEX IF NOT EXISTS idx_post_slug ON Comment(post_slug);
 	CREATE INDEX IF NOT EXISTS idx_status ON Comment(status);`
 
+	// Settings table for web-based configuration
+	settingSchema := `
+	CREATE TABLE IF NOT EXISTS Settings (
+		key TEXT PRIMARY KEY,
+		value TEXT NOT NULL,
+		updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+	);`
+	if _, err := db.Exec(settingSchema); err != nil {
+		return err
+	}
+
 	_, err := db.Exec(schema)
 	return err
 }

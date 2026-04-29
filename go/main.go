@@ -12,6 +12,7 @@ import (
 
 	"momo-backend-go/internal/config"
 	h "momo-backend-go/internal/handler/http"
+	"momo-backend-go/internal/pkg/utils"
 	"momo-backend-go/internal/repository/sqlite"
 
 	"github.com/gin-gonic/gin"
@@ -64,7 +65,8 @@ func main() {
 		log.Fatalf("初始化表结构失败: %v", err)
 	}
 
-	// 4. 初始化
+	// 4. 初始化 Settings 和 Repo
+	utils.InitSettingsDB(db)
 	repo := sqlite.NewCommentRepository(db)
 	handler := &h.CommentHandler{Repo: repo}
 

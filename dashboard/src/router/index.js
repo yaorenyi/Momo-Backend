@@ -29,6 +29,12 @@ const routes = [
     name: 'UserComments',
     component: () => import('../views/UserComments.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../views/Settings.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

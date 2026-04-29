@@ -9,7 +9,7 @@ export default async (ctx: koa.Context): Promise<void> => {
 
   if (!key || !checkKey(key)) {
     ctx.status = 401;
-    ctx.body = { code: 400, message: "Invalid key" };
+    ctx.body = { code: 401, message: "Invalid token" };
     return;
   }
 

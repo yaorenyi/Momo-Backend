@@ -6,16 +6,20 @@
 | --- | --- | --- |
 | POST | `/api/comments` | 提交评论 |
 | GET | `/api/comments` | 获取评论 |
+| POST | `/admin/login` | 登录 |
+| GET | `/admin/settings` | 获取系统设置 |
+| PUT | `/admin/settings` | 更新系统设置 |
+| POST | `/admin/settings/test-email` | 发送测试邮件 |
+| PUT | `/admin/password` | 修改管理员凭据 |
 | GET | `/admin/comments/list` | 获取所有评论 |
 | PUT | `/admin/comments/status` | 修改评论状态 |
-| POST | `/admin/login` | 登录 |
 | GET | `/admin/stats/overview` | 统计概览 |
 | GET | `/admin/stats/users` | 用户列表 |
 | GET | `/admin/stats/users/comments` | 用户的评论 |
 
 **接口说明**
 
-* 每次请求会返回一个状态码 `code`，请求成果为 200，失败为 400
+* 每次请求会返回一个状态码 `code`，请求成功为 200，业务错误为 400，认证错误为 401
 * 每次登录的时候会返回一个 token，用于后续的 API 请求
 * 管理员接口请求头格式：`Authorization: Bearer <token>`
 * 错误处理：如果key无效，则返回状态码 `401 Unauthorized`
@@ -163,21 +167,25 @@
 **请求体**：
 ```json
 {
-  "name": "admin",
-  "password": "password"
+  "name": "momo",
+  "password": "momo"
 }
 ```
 
+> 初始默认凭据为 `momo`/`momo`，首次登录后系统会要求修改。
+
 **响应（成功）**：
 
-如果登录成功，返回一个key
 ```json
 {
   "code": 200,
   "message": "Login successful",
-  "token": "<token>"
+  "token": "<token>",
+  "needChangePassword": false
 }
 ```
+
+> `needChangePassword` 为 `true` 时表示正在使用默认凭据，建议立即修改。
 
 **响应（失败）**：
 
@@ -194,6 +202,168 @@
   "message": "IP is blocked due to multiple failed login attempts"
 }
 ```
+
+### 获取系统设置 (GET `/admin/settings`)
+
+> 获取所有可通过网页修改的系统配置项。敏感字段（密码类）返回空字符串。
+
+**查询参数**：无
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "Settings fetched",
+  "data": {
+    "site_name": "Momo Blog",
+    "admin_email": "admin@example.com",
+    "allow_origin": "http://localhost:4321,https://example.com",
+    "smtp_host": "smtp.example.com",
+    "smtp_port": "465",
+    "email_user": "notify@example.com",
+    "email_password": "",
+    "email_secure": "true",
+    "email_enabled": "true",
+    "reply_template": "",
+    "notification_template": ""
+  }
+}
+```
+
+> `email_password` 和 `admin_name` 等敏感字段始终返回空字符串。
+
+**响应（失败）**：
+```json
+{
+  "code": 401,
+  "message": "Invalid token"
+}
+```
+
+---
+
+### 更新系统设置 (PUT `/admin/settings`)
+
+> 更新系统配置。SMTP 等配置修改后可能需要重启服务才能完全生效。
+
+**请求体**（所有字段可选，只传需要修改的字段）：
+```json
+{
+  "site_name": "My Blog",
+  "admin_email": "newadmin@example.com",
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": "587",
+  "email_user": "user@gmail.com",
+  "email_password": "app-password",
+  "email_secure": "false",
+  "allow_origin": "https://myblog.com",
+  "email_enabled": "true",
+  "reply_template": "<div>Hi {{toName}}，<br>{{replyAuthor}} 回复了你：{{replyContent}}</div>",
+  "notification_template": "<div>{{commentAuthor}} 评论了 {{postTitle}}：{{commentContent}}</div>"
+}
+```
+
+> **邮件模板可用占位符**：
+> - 回复模板：`{{toName}}` `{{replyAuthor}}` `{{postTitle}}` `{{parentComment}}` `{{replyContent}}` `{{postUrl}}`
+> - 通知模板：`{{postTitle}}` `{{commentAuthor}}` `{{commentContent}}` `{{postUrl}}`
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "Settings updated. Some changes may require a restart to take full effect.",
+  "smtpChanged": false
+}
+```
+
+> `smtpChanged` 为 `true` 表示 SMTP 配置有变更。
+
+**响应（失败）**：
+```json
+{
+  "code": 400,
+  "message": "Setting \"invalid_key\" is not allowed"
+}
+```
+
+---
+
+### 发送测试邮件 (POST `/admin/settings/test-email`)
+
+> 向管理员邮箱发送一封测试邮件，验证 SMTP 配置是否正确。
+
+**请求体**：无
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "测试邮件已发送"
+}
+```
+
+**响应（失败）**：
+```json
+{
+  "code": 400,
+  "message": "SMTP 未配置，请先填写 SMTP 服务器信息"
+}
+```
+
+```json
+{
+  "code": 400,
+  "message": "管理员邮箱未配置"
+}
+```
+
+```json
+{
+  "code": 400,
+  "message": "邮件通知功能已关闭，请先开启"
+}
+```
+
+---
+
+### 修改管理员凭据 (PUT `/admin/password`)
+
+> 修改管理员用户名和密码。修改后当前 token 将失效，需重新登录。
+
+**请求体**：
+```json
+{
+  "old_name": "momo",
+  "old_password": "momo",
+  "new_name": "newadmin",
+  "new_password": "newpassword123"
+}
+```
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "Admin credentials updated successfully. Please login again."
+}
+```
+
+**响应（失败）**：
+```json
+{
+  "code": 400,
+  "message": "Current credentials are incorrect"
+}
+```
+
+```json
+{
+  "code": 400,
+  "message": "New password must be at least 4 characters"
+}
+```
+
+---
 
 ### 修改评论状态 (PUT `/admin/comments/status`)
 

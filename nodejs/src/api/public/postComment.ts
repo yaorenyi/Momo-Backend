@@ -2,7 +2,7 @@ import type koa from "koa";
 import { UAParser } from "ua-parser-js";
 import CommentService  from "../../orm/commentService";
 import { Comment, CreateCommentInput } from "../../type/prisma"
-import { sendCommentReplyNotification, sendCommentNotification } from "../../utils/email";
+import { sendCommentReplyNotification, sendCommentNotification, isEmailServiceAvailable } from "../../utils/email";
 import { canPostComment, checkContent} from "../../utils/security"
 import { parseMarkdown } from "../../utils/markdown"
 import LogService from "../../utils/log";
@@ -46,7 +46,7 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
     }
     const comment = await CommentService.createComment(commentData);
     // 发送邮件通知
-    if(process.env.SMTP_HOST !== "") {
+    if(await isEmailServiceAvailable()) {
       if(data.parent_id) {
         LogService.info("Reply comment", { Name: comment.author, Email: comment.email})
         const parentComment = await CommentService.getCommentById(data.parent_id);
