@@ -9,11 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"momo-backend-go/internal/config"
 	h "momo-backend-go/internal/handler/http"
-	"momo-backend-go/internal/pkg/utils"
 	"momo-backend-go/internal/repository/sqlite"
 
 	"github.com/gin-gonic/gin"
@@ -62,40 +60,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("数据库连接失败: %v", err)
 	}
-
-	// SQLite 连接池优化：SQLite 仅支持单写入者，限制连接数避免浪费
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
-	db.SetConnMaxLifetime(0)
-
-	// SQLite 运行时优化 PRAGMA
-	db.MustExec("PRAGMA journal_mode = WAL")
-	db.MustExec("PRAGMA synchronous = NORMAL")
-	db.MustExec("PRAGMA cache_size = -8000")    // 8MB 缓存
-	db.MustExec("PRAGMA temp_store = MEMORY")   // 临时表存内存
-	db.MustExec("PRAGMA mmap_size = 268435456") // 256MB 内存映射
-	db.MustExec("PRAGMA busy_timeout = 5000")   // 锁等待 5s
-
 	if err := sqlite.InitSchema(db); err != nil {
 		log.Fatalf("初始化表结构失败: %v", err)
 	}
 
-	// 4. 启动后台清理任务：每 10 分钟清理过期 token 和登录限流记录
-	go func() {
-		ticker := time.NewTicker(10 * time.Minute)
-		defer ticker.Stop()
-		for range ticker.C {
-			utils.CleanupExpired()
-		}
-	}()
-
-	// 5. 初始化
+	// 4. 初始化
 	repo := sqlite.NewCommentRepository(db)
 	handler := &h.CommentHandler{Repo: repo}
 
-	// 6. 设置 Gin 引擎（使用 gin.New() 避免 Logger 中间件额外分配）
-	r := gin.New()
-	r.Use(gin.Recovery())
+	// 5. 设置 Gin 引擎
+	r := gin.Default()
 
 	// 全局中间件：跨域处理（预解析 allowed origins 避免每次请求重复分配）
 	allowedOrigins := strings.Split(cfg.AllowOrigin, ",")
@@ -126,7 +100,7 @@ func main() {
 		c.Next()
 	})
 
-	// 7. 注册路由
+	// 6. 注册路由
 	h.RegisterRoutes(r, handler)
 
 	// 只要访问 /admin 及其子路径，都尝试返回前端页面
@@ -142,7 +116,7 @@ func main() {
 		}
 	})
 
-	// 8. 启动服务器
+	// 7. 启动服务器
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	fmt.Printf("--- 评论系统后端已启动 ---\n")
 	fmt.Printf("监听地址: %s\n", addr)

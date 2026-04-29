@@ -117,27 +117,3 @@ func IsTokenValid(token string) bool {
 
 	return true
 }
-
-// CleanupExpired 定期清理过期的 token 和登录限流记录
-func CleanupExpired() {
-	now := time.Now()
-
-	// 清理过期 token
-	TokenStore.Lock()
-	for token, exp := range TokenStore.Map {
-		if now.After(exp) {
-			delete(TokenStore.Map, token)
-		}
-	}
-	TokenStore.Unlock()
-
-	// 清理已过期的 IP 封禁记录
-	Limiter.mu.Lock()
-	for ip, until := range Limiter.blockedUntil {
-		if now.After(until) {
-			delete(Limiter.blockedUntil, ip)
-			delete(Limiter.attempts, ip)
-		}
-	}
-	Limiter.mu.Unlock()
-}
