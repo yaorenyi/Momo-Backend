@@ -13,9 +13,7 @@
     ]">
       <div class="h-16 flex items-center justify-between px-6 border-b bg-gray-50 border-gray-200">
         <div class="flex items-center">
-          <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-            <i class="fa-solid fa-comments text-white text-sm"></i>
-          </div>
+          <img src="../assets/logo.svg" class="w-8 h-8" alt="Logo" />
           <span class="font-bold tracking-wide text-gray-800">管理后台</span>
         </div>
         <button @click="closeMobileMenu" class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-200">

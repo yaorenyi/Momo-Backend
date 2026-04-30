@@ -45,31 +45,35 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
       status: "approved"
     }
     const comment = await CommentService.createComment(commentData);
-    // 发送邮件通知
-    if(await isEmailServiceAvailable()) {
-      if(data.parent_id) {
-        LogService.info("Reply comment", { Name: comment.author, Email: comment.email})
-        const parentComment = await CommentService.getCommentById(data.parent_id);
-        if(parentComment && parentComment.email !== data.email) {
-          await sendCommentReplyNotification({
-            toEmail: parentComment.email,
-            toName: parentComment.author,
+    // 发送邮件通知（不影响评论结果）
+    try {
+      if(await isEmailServiceAvailable()) {
+        if(data.parent_id) {
+          LogService.info("Reply comment", { Name: comment.author, Email: comment.email})
+          const parentComment = await CommentService.getCommentById(data.parent_id);
+          if(parentComment && parentComment.email !== data.email) {
+            await sendCommentReplyNotification({
+              toEmail: parentComment.email,
+              toName: parentComment.author,
+              postTitle: postTitle,
+              parentComment: parentComment.content_text,
+              replyAuthor: author,
+              replyContent: content,
+              postUrl: postUrl,
+            });
+          }
+        } else {
+          LogService.info("New comment", { Name: comment.author, Email: comment.email})
+          await sendCommentNotification({
             postTitle: postTitle,
-            parentComment: parentComment.content_text,
-            replyAuthor: author,
-            replyContent: content,
             postUrl: postUrl,
+            commentAuthor: author,
+            commentContent: content
           });
         }
-      } else {
-        LogService.info("New comment", { Name: comment.author, Email: comment.email})
-        await sendCommentNotification({
-          postTitle: postTitle,
-          postUrl: postUrl,
-          commentAuthor: author,
-          commentContent: content
-        });
       }
+    } catch (e) {
+      LogService.error('邮件发送失败（不影响评论提交）:', e);
     }
     ctx.body = {
       code: 200,

@@ -162,8 +162,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import request from '../utils/request'
 import toast from '../utils/toast'
 import AdminLayout from '../components/AdminLayout.vue'
@@ -190,6 +190,9 @@ const removeOrigin = (index) => {
   originList.value.splice(index, 1)
 }
 
+const isDirty = ref(false)
+let initialSnapshot = ''
+
 const form = reactive({
   site_name: '',
   admin_email: '',
@@ -204,6 +207,29 @@ const form = reactive({
   notification_template: '',
 })
 
+const takeSnapshot = () => JSON.stringify({ ...form, _origins: [...originList.value] })
+
+watch([form, originList], () => {
+  isDirty.value = takeSnapshot() !== initialSnapshot
+}, { deep: true })
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const answer = window.confirm('有未保存的修改，确定要离开吗？')
+    if (!answer) { next(false); return }
+  }
+  next()
+})
+
+const handleBeforeUnload = (e) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+onMounted(() => window.addEventListener('beforeunload', handleBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', handleBeforeUnload))
+
 const loadSettings = async () => {
   try {
     const res = await request.get('/admin/settings')
@@ -216,6 +242,8 @@ const loadSettings = async () => {
   } catch (e) {
     console.error('Failed to load settings:', e)
   }
+  initialSnapshot = takeSnapshot()
+  isDirty.value = false
 }
 
 onMounted(() => {
@@ -234,6 +262,8 @@ const saveSettings = async () => {
     if (res.code === 200) {
       saved.value = true
       toast.success('设置已保存')
+      initialSnapshot = takeSnapshot()
+      isDirty.value = false
       setTimeout(() => { saved.value = false }, 3000)
     }
   } catch (e) {

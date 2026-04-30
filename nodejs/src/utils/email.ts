@@ -163,7 +163,7 @@ export async function sendCommentReplyNotification({
     return info;
   } catch (error) {
     LogService.error('评论回复通知邮件发送失败:', error);
-    throw new Error('Failed to send email');
+    return null;
   }
 }
 
@@ -248,7 +248,7 @@ export async function sendCommentNotification({
     return info;
   } catch (error) {
     LogService.error('新评论通知邮件发送失败:', error);
-    throw new Error('Failed to send email');
+    return null;
   }
 }
 

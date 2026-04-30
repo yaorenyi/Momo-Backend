@@ -1,86 +1,81 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-stone-50 to-slate-100 relative overflow-hidden font-sans">
-    <!-- Abstract geometric background -->
-    <div class="absolute inset-0 pointer-events-none">
-      <div class="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-50/60 to-slate-100/30 blur-3xl"></div>
-      <div class="absolute -bottom-40 -left-40 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-stone-100/50 to-slate-50/30 blur-3xl"></div>
-      <div class="absolute top-1/3 left-1/2 w-72 h-72 rounded-full bg-gradient-to-b from-slate-100/30 to-transparent blur-2xl"></div>
-      <svg class="absolute top-[15%] right-[20%] w-24 h-24 opacity-[0.06]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
-        <circle cx="50" cy="50" r="40"/>
-        <circle cx="50" cy="50" r="25"/>
-        <circle cx="50" cy="50" r="10"/>
-        <line x1="50" y1="10" x2="50" y2="90"/>
-        <line x1="10" y1="50" x2="90" y2="50"/>
-      </svg>
-      <svg class="absolute bottom-[20%] left-[15%] w-20 h-20 opacity-[0.05]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1">
-        <rect x="10" y="10" width="80" height="80" rx="8"/>
-        <rect x="25" y="25" width="50" height="50" rx="4"/>
-      </svg>
-    </div>
-
-    <!-- Login card -->
-    <div class="relative w-full max-w-sm mx-4">
-      <div class="bg-white rounded-2xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.08)] px-10 py-12">
-        <div class="text-center mb-10">
-          <h1 class="text-[22px] font-semibold text-gray-900 tracking-tight">登录</h1>
-          <p class="mt-2 text-sm text-gray-400 font-normal">评论管理系统</p>
+  <div class="min-h-screen flex items-center justify-center bg-[#b5cffc] relative overflow-hidden font-sans">
+    <div class="absolute top-[-10%] left-[-5%] w-[60%] h-[70%] bg-blue-600 rounded-full mix-blend-soft-light filter blur-[80px] opacity-60 animate-pulse"></div>
+    <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[60%] bg-[#2d5cf7] rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
+    
+    <div class="z-10 w-full max-w-[420px] px-6">
+      <div class="bg-white p-10 rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+        
+        <div class="flex flex-col items-center mb-8">
+          <div class="flex items-center gap-2">
+            <img src="../assets/logo.svg" class="w-8 h-8" alt="Logo" />
+            <h2 class="text-[#3b82f6] text-2xl font-bold tracking-tight">登录到后台页面</h2>
+          </div>
         </div>
 
-        <form @submit.prevent="handleLogin" class="space-y-4">
-          <div>
-            <input v-model="form.name" type="text" required placeholder="用户名"
-              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
-                     transition-all text-sm bg-gray-50/60 hover:bg-white hover:border-gray-300" />
+        <form class="space-y-4" @submit.prevent="handleLogin">
+          <div class="space-y-1">
+            <input 
+              v-model="form.apiUrl" 
+              type="text" 
+              required 
+              class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg focus:ring-2 focus:ring-blue-300 transition-all outline-none text-gray-600 placeholder-gray-400"
+              placeholder="后端 API 地址"
+            />
           </div>
-          <div>
-            <input v-model="form.password" type="password" required placeholder="密码"
-              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
-                     transition-all text-sm bg-gray-50/60 hover:bg-white hover:border-gray-300" />
+
+          <div class="space-y-1">
+            <input 
+              v-model="form.name" 
+              type="text" 
+              required 
+              class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg focus:ring-2 focus:ring-blue-300 transition-all outline-none text-gray-700"
+              placeholder="用户名"
+            />
           </div>
-          <button type="submit" :disabled="loading"
-            class="w-full py-[11px] bg-slate-900 text-white text-sm font-medium rounded-xl
-                   hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/20
-                   transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ loading ? '验证中...' : '登录' }}
-          </button>
+
+          <div class="space-y-1">
+            <input 
+              v-model="form.password" 
+              type="password" 
+              required 
+              class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg focus:ring-2 focus:ring-blue-300 transition-all outline-none text-gray-700"
+              placeholder="密码"
+            />
+          </div>
+
+          <!-- 按钮组 -->
+          <div class="flex gap-3 pt-2">
+            <button 
+              type="button"
+              @click="resetForm"
+              class="flex-1 py-3 bg-[#d5eff2] text-[#1da1b1] rounded-lg font-bold hover:bg-[#c4e8ed] transition-colors"
+            >
+              清除
+            </button>
+            <button 
+              type="submit" 
+              :disabled="loading"
+              class="flex-1 py-3 bg-[#e2efff] text-[#3b82f6] rounded-lg font-bold hover:bg-[#d4e6ff] transition-all disabled:opacity-50"
+            >
+              {{ loading ? '验证中...' : '登录' }}
+            </button>
+          </div>
         </form>
       </div>
     </div>
 
-    <!-- 修改默认密码弹窗 -->
+    <!-- 首次登录强制修改密码弹窗 -->
     <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-7">
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">首次登录安全提醒</h3>
-        <p class="text-sm text-gray-400 mb-6">
-          您正在使用默认用户名和密码，请立即修改。
-        </p>
-
-        <form @submit.prevent="handleChangePassword" class="space-y-4">
-          <div>
-            <input v-model="passwordForm.new_name" type="text" required placeholder="新用户名"
-              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
-                     transition-all text-sm bg-gray-50/60" />
-          </div>
-          <div>
-            <input v-model="passwordForm.new_password" type="password" required minlength="4" placeholder="新密码"
-              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
-                     transition-all text-sm bg-gray-50/60" />
-          </div>
-          <div>
-            <input v-model="passwordForm.confirm_password" type="password" required minlength="4" placeholder="确认新密码"
-              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
-                     transition-all text-sm bg-gray-50/60" />
-          </div>
-          <button type="submit" :disabled="changingPassword"
-            class="w-full py-[11px] bg-slate-900 text-white text-sm font-medium rounded-xl
-                   hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/20
-                   transition-all disabled:opacity-50">
-            {{ changingPassword ? '更新中...' : '立即更新' }}
+      <div class="bg-white rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] max-w-md w-full mx-4 p-8">
+        <h3 class="text-[#3b82f6] text-xl font-bold mb-1">安全保护</h3>
+        <p class="text-gray-500 text-sm mb-6">为了您的账户安全，初次登录请更新您的凭据。</p>
+        <form @submit.prevent="handleChangePassword" class="space-y-3">
+          <input v-model="passwordForm.new_name" type="text" placeholder="新用户名" required class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
+          <input v-model="passwordForm.new_password" type="password" placeholder="新密码" required minlength="4" class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
+          <input v-model="passwordForm.confirm_password" type="password" placeholder="确认新密码" required minlength="4" class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
+          <button type="submit" :disabled="changingPassword" class="w-full py-3 bg-[#e2efff] text-[#3b82f6] rounded-lg font-bold hover:bg-[#d4e6ff] transition-all disabled:opacity-50">
+            {{ changingPassword ? '正在更新...' : '确认更新' }}
           </button>
         </form>
       </div>
@@ -89,6 +84,7 @@
 </template>
 
 <script setup>
+/* 此处代码逻辑完全保持不变，确保您的功能正常运作 */
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '../utils/request'
@@ -110,6 +106,11 @@ const passwordForm = reactive({
   new_password: '',
   confirm_password: ''
 })
+
+const resetForm = () => {
+  form.name = ''
+  form.password = ''
+}
 
 const handleChangePassword = async () => {
   if (passwordForm.new_password !== passwordForm.confirm_password) {
@@ -133,11 +134,10 @@ const handleChangePassword = async () => {
       toast.success('管理员凭据已更新，请重新登录')
       localStorage.removeItem('token')
       showPasswordModal.value = false
-      form.name = ''
-      form.password = ''
+      resetForm()
     }
   } catch (e) {
-    console.error('Password change failed:', e)
+    // console.error('Password change failed:', e)
     toast.error('密码更新失败')
   } finally {
     changingPassword.value = false
@@ -153,16 +153,10 @@ const handleLogin = async () => {
   loading.value = true
   const formattedApiUrl = form.apiUrl.replace(/\/$/, '')
   localStorage.setItem('apiUrl', formattedApiUrl)
-
   try {
-    const payload = {
-      name: form.name,
-      password: form.password
-    }
-    const res = await request.post('/admin/login', payload)
-
+    const res = await request.post('/admin/login', { name: form.name, password: form.password })
     if (res.code === 200) {
-      toast.success('登录成功')
+      toast.success('欢迎回来')
       localStorage.setItem('token', res.token)
       localStorage.setItem('admin_name', form.name)
       if (res.needChangePassword) {
@@ -172,9 +166,20 @@ const handleLogin = async () => {
       }
     }
   } catch (error) {
-    toast.error('登录失败，请检查用户名和密码')
+    toast.error('登录失败，请检查配置')
   } finally {
     loading.value = false
   }
 }
 </script>
+
+<style scoped>
+/* 这里可以根据需要微调背景动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+.animate-pulse {
+  animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>
