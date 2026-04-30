@@ -73,17 +73,17 @@ func (h *CommentHandler) GetSettings(c *gin.Context) {
 	}
 
 	allowedSettings := map[string]bool{
-		"site_name":            true,
-		"admin_email":          true,
-		"admin_name":           true,
-		"smtp_host":            true,
-		"smtp_port":            true,
-		"email_user":           true,
-		"email_password":       true,
-		"email_secure":         true,
-		"allow_origin":         true,
-		"email_enabled":        true,
-		"reply_template":       true,
+		"site_name":             true,
+		"admin_email":           true,
+		"admin_name":            true,
+		"smtp_host":             true,
+		"smtp_port":             true,
+		"email_user":            true,
+		"email_password":        true,
+		"email_secure":          true,
+		"allow_origin":          true,
+		"email_enabled":         true,
+		"reply_template":        true,
 		"notification_template": true,
 	}
 
@@ -119,17 +119,17 @@ func (h *CommentHandler) UpdateSettings(c *gin.Context) {
 	}
 
 	allowedSettings := map[string]bool{
-		"site_name":            true,
-		"admin_email":          true,
-		"admin_name":           true,
-		"smtp_host":            true,
-		"smtp_port":            true,
-		"email_user":           true,
-		"email_password":       true,
-		"email_secure":         true,
-		"allow_origin":         true,
-		"email_enabled":        true,
-		"reply_template":       true,
+		"site_name":             true,
+		"admin_email":           true,
+		"admin_name":            true,
+		"smtp_host":             true,
+		"smtp_port":             true,
+		"email_user":            true,
+		"email_password":        true,
+		"email_secure":          true,
+		"allow_origin":          true,
+		"email_enabled":         true,
+		"reply_template":        true,
 		"notification_template": true,
 	}
 
@@ -164,7 +164,7 @@ func (h *CommentHandler) TestEmail(c *gin.Context) {
 	if adminEmail == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "管理员邮箱未配置",
+			"message": "Admin email is not configured. ",
 		})
 		return
 	}
@@ -173,7 +173,7 @@ func (h *CommentHandler) TestEmail(c *gin.Context) {
 	if !svc.IsAvailable() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "SMTP 未配置，请先填写 SMTP 服务器信息",
+			"message": "SMTP is not configured. ",
 		})
 		return
 	}
@@ -181,7 +181,7 @@ func (h *CommentHandler) TestEmail(c *gin.Context) {
 	if !utils.IsEmailEnabled() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "邮件通知功能已关闭，请先开启",
+			"message": "The email notification feature is currently disabled. ",
 		})
 		return
 	}
@@ -205,7 +205,7 @@ func (h *CommentHandler) TestEmail(c *gin.Context) {
 	log.Printf("[INFO] Test email sent to: %s", adminEmail)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
-		"message": "测试邮件已发送",
+		"message": "A test email has been sent",
 	})
 }
 

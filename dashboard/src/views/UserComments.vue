@@ -6,7 +6,7 @@
 
     <template v-else>
       <!-- User Info Header -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 flex items-center justify-between">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <button @click="goBack" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
             <i class="fa-solid fa-arrow-left"></i>
@@ -20,7 +20,7 @@
       </div>
 
       <!-- Comments List -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Mobile: card layout -->
         <div class="md:hidden divide-y divide-gray-100">
           <div v-for="item in comments" :key="item.id" @click="openDetail(item)"

@@ -1,103 +1,85 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 font-sans">
-    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-sm border border-gray-100">
-      <div>
-        <h2 class="mt-2 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
-          评论管理系统
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-500">
-          请输入您的凭据以访问后台
-        </p>
-      </div>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-stone-50 to-slate-100 relative overflow-hidden font-sans">
+    <!-- Abstract geometric background -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-50/60 to-slate-100/30 blur-3xl"></div>
+      <div class="absolute -bottom-40 -left-40 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-stone-100/50 to-slate-50/30 blur-3xl"></div>
+      <div class="absolute top-1/3 left-1/2 w-72 h-72 rounded-full bg-gradient-to-b from-slate-100/30 to-transparent blur-2xl"></div>
+      <svg class="absolute top-[15%] right-[20%] w-24 h-24 opacity-[0.06]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+        <circle cx="50" cy="50" r="40"/>
+        <circle cx="50" cy="50" r="25"/>
+        <circle cx="50" cy="50" r="10"/>
+        <line x1="50" y1="10" x2="50" y2="90"/>
+        <line x1="10" y1="50" x2="90" y2="50"/>
+      </svg>
+      <svg class="absolute bottom-[20%] left-[15%] w-20 h-20 opacity-[0.05]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="10" y="10" width="80" height="80" rx="8"/>
+        <rect x="25" y="25" width="50" height="50" rx="4"/>
+      </svg>
+    </div>
 
-      <form class="mt-8 space-y-5" @submit.prevent="handleLogin">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">后端 API 地址</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
-              API
-            </div>
-            <input 
-              v-model="form.apiUrl" 
-              type="text" 
-              required 
-              placeholder="https://api.example.com"
-              class="appearance-none block w-full pl-12 pr-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:text-sm"
-            />
+    <!-- Login card -->
+    <div class="relative w-full max-w-sm mx-4">
+      <div class="bg-white rounded-2xl shadow-[0_20px_60px_-12px_rgba(0,0,0,0.08)] px-10 py-12">
+        <div class="text-center mb-10">
+          <h1 class="text-[22px] font-semibold text-gray-900 tracking-tight">登录</h1>
+          <p class="mt-2 text-sm text-gray-400 font-normal">评论管理系统</p>
+        </div>
+
+        <form @submit.prevent="handleLogin" class="space-y-4">
+          <div>
+            <input v-model="form.name" type="text" required placeholder="用户名"
+              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
+                     transition-all text-sm bg-gray-50/60 hover:bg-white hover:border-gray-300" />
           </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
-          <input 
-            v-model="form.name" 
-            type="text" 
-            required 
-            placeholder=""
-            class="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:text-sm"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
-          <input 
-            v-model="form.password" 
-            type="password" 
-            required 
-            placeholder=""
-            class="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:text-sm"
-          />
-        </div>
-
-        <div>
-          <button 
-            type="submit" 
-            :disabled="loading"
-            class="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            <span v-if="loading" class="absolute left-0 inset-y-0 flex items-center pl-3">
-              <svg class="animate-spin h-5 w-5 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
-            {{ loading ? '正在验证...' : '立即登录' }}
+          <div>
+            <input v-model="form.password" type="password" required placeholder="密码"
+              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
+                     transition-all text-sm bg-gray-50/60 hover:bg-white hover:border-gray-300" />
+          </div>
+          <button type="submit" :disabled="loading"
+            class="w-full py-[11px] bg-slate-900 text-white text-sm font-medium rounded-xl
+                   hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/20
+                   transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ loading ? '验证中...' : '登录' }}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
 
     <!-- 修改默认密码弹窗 -->
-    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8">
-        <div class="text-center mb-6">
-          <div class="w-14 h-14 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-3">
-            <i class="fa-solid fa-shield-halved text-amber-600 text-2xl"></i>
-          </div>
-          <h3 class="text-xl font-bold text-gray-900">首次登录安全提醒</h3>
-          <p class="text-sm text-gray-500 mt-2">
-            您正在使用默认用户名和密码，请立即修改以保护您的站点安全。
-          </p>
-        </div>
+    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-7">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">首次登录安全提醒</h3>
+        <p class="text-sm text-gray-400 mb-6">
+          您正在使用默认用户名和密码，请立即修改。
+        </p>
 
         <form @submit.prevent="handleChangePassword" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">新用户名</label>
-            <input v-model="passwordForm.new_name" type="text" required
-              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+            <input v-model="passwordForm.new_name" type="text" required placeholder="新用户名"
+              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
+                     transition-all text-sm bg-gray-50/60" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
-            <input v-model="passwordForm.new_password" type="password" required minlength="4"
-              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+            <input v-model="passwordForm.new_password" type="password" required minlength="4" placeholder="新密码"
+              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
+                     transition-all text-sm bg-gray-50/60" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
-            <input v-model="passwordForm.confirm_password" type="password" required minlength="4"
-              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+            <input v-model="passwordForm.confirm_password" type="password" required minlength="4" placeholder="确认新密码"
+              class="w-full px-4 py-[11px] border border-gray-200 rounded-xl placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300
+                     transition-all text-sm bg-gray-50/60" />
           </div>
           <button type="submit" :disabled="changingPassword"
-            class="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-semibold">
+            class="w-full py-[11px] bg-slate-900 text-white text-sm font-medium rounded-xl
+                   hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/20
+                   transition-all disabled:opacity-50">
             {{ changingPassword ? '更新中...' : '立即更新' }}
           </button>
         </form>
@@ -156,15 +138,15 @@ const handleChangePassword = async () => {
     }
   } catch (e) {
     console.error('Password change failed:', e)
+    toast.error('密码更新失败')
   } finally {
     changingPassword.value = false
   }
 }
 
 const handleLogin = async () => {
-  // 基础表单验证
-  if (!form.apiUrl || !form.name || !form.password) {
-    toast.warning('请完整填写登录信息')
+  if (!form.name || !form.password) {
+    toast.warning('请填写用户名和密码')
     return
   }
 
@@ -178,7 +160,7 @@ const handleLogin = async () => {
       password: form.password
     }
     const res = await request.post('/admin/login', payload)
-    
+
     if (res.code === 200) {
       toast.success('登录成功')
       localStorage.setItem('token', res.token)
@@ -190,16 +172,9 @@ const handleLogin = async () => {
       }
     }
   } catch (error) {
-    console.error('Login failed:', error)
+    toast.error('登录失败，请检查用户名和密码')
   } finally {
     loading.value = false
   }
 }
 </script>
-
-<style scoped>
-/* 大部分样式已通过 Tailwind 实现，此处只需处理特定交互 */
-input::placeholder {
-  color: #9ca3af;
-}
-</style>

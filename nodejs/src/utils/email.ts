@@ -255,11 +255,11 @@ export async function sendCommentNotification({
 export async function sendTestEmail(toEmail: string): Promise<void> {
   const config = await getSmtpConfig();
   if (!config) {
-    throw new Error('SMTP 未配置，请先填写 SMTP 服务器信息');
+    throw new Error('SMTP is not configured. ');
   }
 
   if (!(await isEmailEnabled())) {
-    throw new Error('邮件通知功能已关闭，请先开启');
+    throw new Error('The email notification feature is currently disabled. ');
   }
 
   const siteName = await getSetting("site_name") || 'Momo Blog';

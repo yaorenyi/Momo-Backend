@@ -198,12 +198,12 @@ export async function sendCommentNotification(
 
 export async function sendTestEmail(env: Bindings, toEmail: string): Promise<void> {
   if (!(await isEmailEnabled(env))) {
-    throw new Error('邮件通知功能已关闭，请先开启');
+    throw new Error('The email notification feature is currently disabled. ');
   }
 
   const config = await getSmtpConfig(env);
   if (!config) {
-    throw new Error('SMTP 未配置，请先填写 SMTP 服务器信息');
+    throw new Error('SMTP is not configured. ');
   }
 
   const siteName = await getSetting(env, "site_name") || 'Momo Blog';

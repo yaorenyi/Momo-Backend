@@ -87,13 +87,13 @@ export async function testEmail(ctx: koa.Context) {
   const adminEmail = all["admin_email"] || '';
   if (!adminEmail) {
     ctx.status = 400;
-    ctx.body = { code: 400, message: '管理员邮箱未配置' };
+    ctx.body = { code: 400, message: 'Admin email is not configured. ' };
     return;
   }
 
   try {
     await sendTestEmail(adminEmail);
-    ctx.body = { code: 200, message: '测试邮件已发送' };
+    ctx.body = { code: 200, message: 'A test email has been sent' };
   } catch (e: any) {
     ctx.status = 400;
     ctx.body = { code: 400, message: e.message || '邮件发送失败' };

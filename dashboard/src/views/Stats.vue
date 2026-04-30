@@ -8,7 +8,7 @@
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div @click="goComments()"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-blue-200">
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-blue-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wider text-gray-500">评论总数</p>
@@ -20,7 +20,7 @@
           </div>
         </div>
         <div @click="goUsers()"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-green-200">
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-green-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wider text-gray-500">评论用户</p>
@@ -32,7 +32,7 @@
           </div>
         </div>
         <div @click="goComments()"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-purple-200">
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-purple-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wider text-gray-500">文章数</p>
@@ -44,7 +44,7 @@
           </div>
         </div>
         <div @click="goComments('pending')"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-amber-200">
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 cursor-pointer transition-all hover:shadow-md hover:border-amber-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wider text-gray-500">待审核</p>
@@ -60,20 +60,20 @@
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Status Distribution -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
           <h3 class="text-sm font-semibold text-gray-700 mb-4">评论状态分布</h3>
           <div ref="statusChartRef" style="height: 260px"></div>
         </div>
 
         <!-- Recent 7 Days Trend -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
           <h3 class="text-sm font-semibold text-gray-700 mb-4">最近 7 天评论趋势</h3>
           <div ref="trendChartRef" style="height: 260px"></div>
         </div>
       </div>
 
       <!-- Top Commenters -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100">
           <h3 class="text-sm font-semibold text-gray-700">热门评论者 Top 5</h3>
         </div>

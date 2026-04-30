@@ -60,12 +60,12 @@ export const updateSettings = async (c: Context<{ Bindings: Bindings }>) => {
 export const testEmail = async (c: Context<{ Bindings: Bindings }>) => {
   const adminEmail = await getSetting(c.env, "admin_email");
   if (!adminEmail) {
-    return c.json({ code: 400, message: '管理员邮箱未配置' }, 400);
+    return c.json({ code: 400, message: 'Admin email is not configured. ' }, 400);
   }
 
   try {
     await sendTestEmail(c.env, adminEmail);
-    return c.json({ code: 200, message: '测试邮件已发送' });
+    return c.json({ code: 200, message: 'A test email has been sent' });
   } catch (e: any) {
     return c.json({ code: 400, message: e.message || '邮件发送失败' }, 400);
   }

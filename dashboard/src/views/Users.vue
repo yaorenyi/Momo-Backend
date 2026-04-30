@@ -5,7 +5,7 @@
     </div>
 
     <template v-else>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Mobile: card layout -->
         <div class="md:hidden divide-y divide-gray-100">
           <div v-for="user in users" :key="user.author + user.email" class="p-4">

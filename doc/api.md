@@ -298,7 +298,7 @@
 ```json
 {
   "code": 200,
-  "message": "测试邮件已发送"
+  "message": "A test email has been sent"
 }
 ```
 
@@ -306,21 +306,21 @@
 ```json
 {
   "code": 400,
-  "message": "SMTP 未配置，请先填写 SMTP 服务器信息"
+  "message": "SMTP is not configured. "
 }
 ```
 
 ```json
 {
   "code": 400,
-  "message": "管理员邮箱未配置"
+  "message": "Admin email is not configured. "
 }
 ```
 
 ```json
 {
   "code": 400,
-  "message": "邮件通知功能已关闭，请先开启"
+  "message": "The email notification feature is currently disabled. "
 }
 ```
 

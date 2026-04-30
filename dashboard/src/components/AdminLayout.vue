@@ -123,8 +123,11 @@ const pageTitle = computed(() => {
     '/comments': '评论列表',
     '/users': '用户列表',
     '/user-comments': '用户评论',
-    '/settings': '系统设置'
+    '/settings': '系统设置',
+    '/settings/site': '站点设置',
+    '/settings/account': '账户安全',
   };
-  return map[route.path] || '管理后台';
+  const matched = Object.keys(map).find(path => route.path === path);
+  return matched ? map[matched] : '管理后台';
 });
 </script>
