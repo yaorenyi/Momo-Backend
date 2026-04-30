@@ -73,13 +73,19 @@ func main() {
 	// 5. 设置 Gin 引擎
 	r := gin.Default()
 
-	// 全局中间件：跨域处理（预解析 allowed origins 避免每次请求重复分配）
-	allowedOrigins := strings.Split(cfg.AllowOrigin, ",")
-	for i := range allowedOrigins {
-		allowedOrigins[i] = strings.TrimSpace(allowedOrigins[i])
-	}
+	// 全局中间件：跨域处理（从数据库读取 allow_origin）
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
+		if origin == "" {
+			c.Next()
+			return
+		}
+
+		allowOriginStr := utils.GetSetting("allow_origin")
+		allowedOrigins := strings.Split(allowOriginStr, ",")
+		for i := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(allowedOrigins[i])
+		}
 
 		isAllowed := false
 		for _, o := range allowedOrigins {
@@ -123,7 +129,6 @@ func main() {
 	fmt.Printf("--- 评论系统后端已启动 ---\n")
 	fmt.Printf("监听地址: %s\n", addr)
 	fmt.Printf("数据库路径: %s\n", dbPath)
-	fmt.Printf("管理员名称: %s\n", cfg.AdminName)
 	fmt.Printf("版本: %s\n", Version)
 
 	if err := r.Run(addr); err != nil {

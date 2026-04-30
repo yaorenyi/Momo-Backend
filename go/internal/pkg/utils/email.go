@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"momo-backend-go/internal/config"
 
 	"gopkg.in/gomail.v2"
 )
@@ -76,21 +75,12 @@ func GetService() *EmailService {
 		return &EmailService{}
 	}
 
-	// 使用 YAML 中的 siteName 作为兜底
 	siteName := GetSetting("site_name")
 	if siteName == "" {
-		if config.GlobalConfig != nil {
-			siteName = config.GlobalConfig.SiteName
-		}
-		if siteName == "" {
-			siteName = "Momo Blog"
-		}
+		siteName = "Momo Blog"
 	}
 
 	adminMail := GetSetting("admin_email")
-	if adminMail == "" && config.GlobalConfig != nil {
-		adminMail = config.GlobalConfig.AdminEmail
-	}
 
 	dialer := gomail.NewDialer(cfg.host, cfg.port, cfg.user, cfg.pass)
 	if cfg.secure {

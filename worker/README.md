@@ -170,9 +170,9 @@ cd ../nodejs
 
 部署成功后回得到一个域名，即为后端的域名（格式一般为`https://momo-backend-worker.xxx.workers.dev`。
 
-访问该域名，如果显示后端管理页面并可以正常登录则部署成功。**默认用户和密码均为`momo`，首次进入需要修改用户名和密码**，系统参数可以在右侧的系统参数中修改。
+访问该域名，如果显示后端管理页面并可以正常登录则部署成功。**默认用户和密码均为`momo`，首次进入需要修改用户名和密码**，系统参数可以在右侧的系统参数中修改，可以参考[系统参数](##系统参数)。
 
-将此域名填写到博客的配置文件中即可使用评论功能。当然也可以使用自定义域名，注意不要使用三级域名，即`*.*.example.com`。
+将后端域名填写到博客的配置文件中即可使用评论功能。当然也可以使用自定义域名，注意不要使用三级域名，即`*.*.example.com`。
 
 ## 系统参数
 
@@ -229,6 +229,44 @@ cd ../nodejs
         </div>
         <div style="background-color: #fafbfc; padding: 15px 30px; border-top: 1px solid #eeeeee; text-align: center;">
             <p style="margin: 0; font-size: 12px; color: #999;">此邮件由系统自动发送，请勿直接回复。</p>
+        </div>
+    </div>
+</div>
+```
+
+### 新评论通知模板
+
+| 参数名 | 描述 |
+| --- | --- |
+| `{{postTitle}}` | 文章标题 |
+| `{{postUrl}}` |  文章链接 |
+| `{{commentAuthor}}` |  评论者昵称 |
+| `{{commentContent}}` |  评论内容 |
+
+默认模板如下：
+
+```html
+<div style="background-color: #f6f8fa; padding: 40px 20px; min-height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); overflow: hidden;">
+        <div style="height: 4px; background: linear-gradient(90deg, #007acc, #00c6ff);"></div>
+        	<div style="padding: 32px;">
+            <h2 style="margin: 0 0 16px 0; color: #1a1a1a; font-size: 20px; line-height: 1.4;">有人在你的文章下发表了评论</h2>
+            <p style="color: #555; font-size: 15px; margin-bottom: 24px; line-height: 1.6;">
+              	<strong style="color: #007acc;">{{commentAuthor}}</strong> 评论了你的文章 <b style="color: #1a1a1a;">《{{postTitle}}》</b>：
+            </p>
+            <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; border: 1px dashed #e1e4e8; margin-bottom: 32px;">
+              	<div style="color: #444; font-size: 15px; line-height: 1.8; word-break: break-all;">
+                	{{commentContent}}
+              	</div>
+            </div>
+            <div style="text-align: center;">
+              	<a href="{{postUrl}}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px; transition: all 0.3s ease;">
+                	立即前往查看
+              	</a>
+            </div>
+        </div>
+        <div style="background-color: #fafbfc; padding: 20px; text-align: center; border-top: 1px solid #f0f0f0;">
+            <p style="margin: 0; font-size: 13px; color: #99aab5; line-height: 1.5;">此邮件由系统自动发送，请勿直接回复。</p>
         </div>
     </div>
 </div>

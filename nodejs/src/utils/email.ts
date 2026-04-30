@@ -267,7 +267,7 @@ export async function sendTestEmail(toEmail: string): Promise<void> {
   await sendEmail(config, {
     from: await getSenderAddress(),
     to: toEmail,
-    subject: `测试邮件 - ${siteName} SMTP 配置验证`,
+    subject: `SMTP 配置验证`,
     html: `<div style="font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #e1e4e8; border-radius: 8px;">
       <h2 style="color: #333; margin-top: 0;">SMTP 配置测试</h2>
       <p style="color: #555; line-height: 1.6;">这是一封来自 <strong>${siteName}</strong> 的测试邮件。</p>

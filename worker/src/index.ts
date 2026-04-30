@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { Bindings } from './bindings'
 import { customCors } from './utils/cors'
+import { getSetting } from './utils/settings'
 import { adminAuth } from './utils/auth'
 
 import { getComments } from './api/public/getComments'
@@ -17,9 +17,10 @@ import { userComments } from './api/admin/userComments'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-// 跨域
+// 跨域（从数据库读取允许的来源）
 app.use('/api/*', async (c, next) => {
-  const corsMiddleware = customCors(c.env.ALLOW_ORIGIN)
+  const allowOriginStr = await getSetting(c.env, "allow_origin") || '*'
+  const corsMiddleware = customCors(allowOriginStr)
   return corsMiddleware(c, next)
 })
 
