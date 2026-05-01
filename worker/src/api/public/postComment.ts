@@ -7,16 +7,19 @@ import { parseMarkdown } from '../../utils/markdown';
 
 // 检查内容，删除 XSS 攻击脚本
 export function checkContent(content: string): string {
+    if (!content) return content;
     return content
         // Remove script/style blocks and their content
         .replace(/<(?:script|style)[\s\S]*?<\/(?:script|style)>/gi, '')
         // Remove event handler attributes (onclick, onerror, onload, etc.)
         .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-        // Remove javascript: and vbscript: links in href/src/action
+        // Remove javascript: and vbscript: links in href/src/action (quoted)
         .replace(/(?:href|src|action|formaction)\s*=\s*"(?:javascript|vbscript):[^"]*"/gi, '')
         .replace(/(?:href|src|action|formaction)\s*=\s*'(?:javascript|vbscript):[^']*'/gi, '')
+        // Remove javascript: and vbscript: links (unquoted, e.g. href=javascript:alert(1))
+        .replace(/(?:href|src|action|formaction)\s*=\s*(?:javascript|vbscript):[^\s>"]+/gi, '')
         // Remove standalone javascript: and vbscript: protocol
-        .replace(/^(?:javascript|vbscript):\s*/gi, '')
+        .replace(/(?:javascript|vbscript):\s*/gi, '')
         // Remove dangerous embedding tags
         .replace(/<\/?(?:iframe|object|embed|frame|meta|link|base|form|input)\b[^>]*>/gi, '');
 }

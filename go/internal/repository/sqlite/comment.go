@@ -286,6 +286,7 @@ func getDateRange(daysBack int) []string {
 }
 
 func (r *commentRepo) GetUserComments(ctx context.Context, author, email string, offset, limit int) ([]*model.AdminCommentResponse, int64, error) {
+
 	var total int64
 	_ = r.db.GetContext(ctx, &total, "SELECT COUNT(*) FROM Comment WHERE author = ? AND email = ?", author, email)
 
@@ -316,4 +317,14 @@ func (r *commentRepo) GetUserComments(ctx context.Context, author, email string,
 	}
 
 	return resp, total, nil
+}
+
+
+func (r *commentRepo) GetLastCommentByIP(ctx context.Context, ip string) (*model.Comment, error) {
+	var c model.Comment
+	err := r.db.GetContext(ctx, &c, "SELECT * FROM Comment WHERE ip_address = ? ORDER BY pub_date DESC LIMIT 1", ip)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }

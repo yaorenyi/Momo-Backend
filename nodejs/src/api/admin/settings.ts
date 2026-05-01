@@ -96,6 +96,6 @@ export async function testEmail(ctx: koa.Context) {
     ctx.body = { code: 200, message: 'A test email has been sent' };
   } catch (e: any) {
     ctx.status = 400;
-    ctx.body = { code: 400, message: e.message || '邮件发送失败' };
+    ctx.body = { code: 400, message: '邮件发送失败，请检查 SMTP 配置' };
   }
 }

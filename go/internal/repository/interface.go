@@ -17,4 +17,6 @@ type CommentRepository interface {
 	GetStatsOverview(ctx context.Context) (*model.StatsOverview, error)
 	GetUserList(ctx context.Context, offset, limit int) ([]*model.UserStats, int64, error)
 	GetUserComments(ctx context.Context, author, email string, offset, limit int) ([]*model.AdminCommentResponse, int64, error)
+	// Rate limiting
+	GetLastCommentByIP(ctx context.Context, ip string) (*model.Comment, error)
 }

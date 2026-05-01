@@ -3,7 +3,7 @@ import { UAParser } from "ua-parser-js";
 import CommentService  from "../../orm/commentService";
 import { Comment, CreateCommentInput } from "../../type/prisma"
 import { sendCommentReplyNotification, sendCommentNotification, isEmailServiceAvailable } from "../../utils/email";
-import { canPostComment, checkContent} from "../../utils/security"
+import { canPostComment, checkContent, sanitizeHtml } from "../../utils/security"
 import { parseMarkdown } from "../../utils/markdown"
 import LogService from "../../utils/log";
 
@@ -40,7 +40,7 @@ export default async (ctx: koa.Context, next: koa.Next): Promise<void> => {
       device: uaResult.device.model || uaResult.device.type || uaResult.device.vendor || "",
       user_agent: ctx.request.header['user-agent'] || "",
       content_text: content,
-      content_html: parseMarkdown(content),
+      content_html: sanitizeHtml(parseMarkdown(content)),
       parent_id: data.parent_id ?? null,
       status: "approved"
     }

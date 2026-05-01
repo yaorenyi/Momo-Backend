@@ -2,6 +2,10 @@ import * as nodemailer from 'nodemailer';
 import LogService from "../utils/log";
 import { getSetting } from "./settings";
 
+function htmlEscape(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // 核心接口与通用发送函数
 export interface SmtpConfig {
   host: string;
@@ -69,7 +73,7 @@ export async function isEmailServiceAvailable(): Promise<boolean> {
 async function getSenderAddress(): Promise<string> {
   const siteName = await getSetting("site_name") || 'Momo Blog';
   const userEmail = await getSetting("email_user");
-  return `'${siteName} 评论通知' <${userEmail}>`;
+  return `${siteName} 评论通知 <${userEmail}>`;
 }
 
 // 检查邮件通知是否启用（从设置读取）
@@ -121,23 +125,23 @@ export async function sendCommentReplyNotification({
           <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e1e4e8;">
 
             <div style="padding: 30px;">
-              <h2 style="margin-top: 0; color: #333; font-size: 18px;">Hi ${toName}，</h2>
+              <h2 style="margin-top: 0; color: #333; font-size: 18px;">Hi ${htmlEscape(toName)}，</h2>
               <p style="color: #555; line-height: 1.6;">
-                <strong>${replyAuthor}</strong> 回复了你在 <span style="color: #007acc;">《${postTitle}》</span> 中的评论：
+                <strong>${htmlEscape(replyAuthor)}</strong> 回复了你在 <span style="color: #007acc;">《${htmlEscape(postTitle)}》</span> 中的评论：
               </p>
 
               <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #555; font-size: 14px;">
-                ${parentComment}
+                ${htmlEscape(parentComment)}
               </div>
 
               <p style="color: #333; font-weight: bold; margin-bottom: 8px;">最新回复：</p>
 
               <div style="margin-bottom: 30px; padding: 16px; border-radius: 6px; background-color: #f0f7ff; border-left: 4px solid #007acc; color: #2c3e50; line-height: 1.6;">
-                ${replyContent}
+                ${htmlEscape(replyContent)}
               </div>
 
               <div style="text-align: center;">
-                <a href="${postUrl}"
+                <a href="${htmlEscape(postUrl)}"
                    style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 5px rgba(0,122,204,0.2);">
                   点击查看回复
                 </a>
@@ -211,18 +215,18 @@ export async function sendCommentNotification({
               </h2>
 
               <p style="color: #555; font-size: 15px; margin-bottom: 24px; line-height: 1.6;">
-                <strong style="color: #007acc;">${commentAuthor}</strong> 评论了你的文章
-                <b style="color: #1a1a1a;">《${postTitle}》</b>：
+                <strong style="color: #007acc;">${htmlEscape(commentAuthor)}</strong> 评论了你的文章
+                <b style="color: #1a1a1a;">《${htmlEscape(postTitle)}》</b>：
               </p>
 
               <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; border: 1px dashed #e1e4e8; margin-bottom: 32px;">
                 <div style="color: #444; font-size: 15px; line-height: 1.8; word-break: break-all;">
-                  ${commentContent}
+                  ${htmlEscape(commentContent)}
                 </div>
               </div>
 
               <div style="text-align: center;">
-                <a href="${postUrl}"
+                <a href="${htmlEscape(postUrl)}"
                    style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px; transition: all 0.3s ease;">
                   立即前往查看
                 </a>

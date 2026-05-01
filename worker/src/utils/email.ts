@@ -2,6 +2,10 @@ import nodemailer from 'nodemailer';
 import { Bindings } from '../bindings';
 import { getSetting, isEmailEnabled } from './settings';
 
+function htmlEscape(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 /**
  * 从数据库获取 SMTP 配置
  */
@@ -43,7 +47,7 @@ async function smtpFetch(env: Bindings, options: { to: string, subject: string, 
 
     // 发送邮件
     const info = await transporter.sendMail({
-      from: `'${siteName} 评论通知' <${config.user}>`,
+      from: `${siteName} 评论通知 <${config.user}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -82,30 +86,30 @@ export async function sendCommentReplyNotification(
   let html: string;
   if (customTpl) {
     html = customTpl
-      .replace(/\{\{toName\}\}/g, toName)
-      .replace(/\{\{replyAuthor\}\}/g, replyAuthor)
-      .replace(/\{\{postTitle\}\}/g, postTitle)
-      .replace(/\{\{parentComment\}\}/g, parentComment)
-      .replace(/\{\{replyContent\}\}/g, replyContent)
-      .replace(/\{\{postUrl\}\}/g, postUrl);
+      .replace(/\{\{toName\}\}/g, htmlEscape(toName))
+      .replace(/\{\{replyAuthor\}\}/g, htmlEscape(replyAuthor))
+      .replace(/\{\{postTitle\}\}/g, htmlEscape(postTitle))
+      .replace(/\{\{parentComment\}\}/g, htmlEscape(parentComment))
+      .replace(/\{\{replyContent\}\}/g, htmlEscape(replyContent))
+      .replace(/\{\{postUrl\}\}/g, htmlEscape(postUrl));
   } else {
     html = `
       <div style="background-color: #f4f7f9; padding: 20px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e1e4e8;">
           <div style="padding: 30px;">
-            <h2 style="margin-top: 0; color: #333; font-size: 18px;">Hi ${toName}，</h2>
+            <h2 style="margin-top: 0; color: #333; font-size: 18px;">Hi ${htmlEscape(toName)}，</h2>
             <p style="color: #555; line-height: 1.6;">
-              <strong>${replyAuthor}</strong> 回复了你在 <span style="color: #007acc;">《${postTitle}》</span> 中的评论：
+              <strong>${htmlEscape(replyAuthor)}</strong> 回复了你在 <span style="color: #007acc;">《${htmlEscape(postTitle)}》</span> 中的评论：
             </p>
             <div style="margin: 20px 0; padding: 12px 16px; border-left: 4px solid #dfe3e8; background-color: #fcfcfc; color: #555; font-size: 14px;">
-              ${parentComment}
+              ${htmlEscape(parentComment)}
             </div>
             <p style="color: #333; font-weight: bold; margin-bottom: 8px;">最新回复：</p>
             <div style="margin-bottom: 30px; padding: 16px; border-radius: 6px; background-color: #f0f7ff; border-left: 4px solid #007acc; color: #2c3e50; line-height: 1.6;">
-              ${replyContent}
+              ${htmlEscape(replyContent)}
             </div>
             <div style="text-align: center;">
-              <a href="${postUrl}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 5px rgba(0,122,204,0.2);">
+              <a href="${htmlEscape(postUrl)}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 5px rgba(0,122,204,0.2);">
                 点击查看回复
               </a>
             </div>
@@ -149,10 +153,10 @@ export async function sendCommentNotification(
   let html: string;
   if (customTpl) {
     html = customTpl
-      .replace(/\{\{postTitle\}\}/g, postTitle)
-      .replace(/\{\{commentAuthor\}\}/g, commentAuthor)
-      .replace(/\{\{commentContent\}\}/g, commentContent)
-      .replace(/\{\{postUrl\}\}/g, postUrl);
+      .replace(/\{\{postTitle\}\}/g, htmlEscape(postTitle))
+      .replace(/\{\{commentAuthor\}\}/g, htmlEscape(commentAuthor))
+      .replace(/\{\{commentContent\}\}/g, htmlEscape(commentContent))
+      .replace(/\{\{postUrl\}\}/g, htmlEscape(postUrl));
   } else {
     html = `
       <div style="background-color: #f6f8fa; padding: 40px 20px; min-height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;">
@@ -161,15 +165,15 @@ export async function sendCommentNotification(
           <div style="padding: 32px;">
             <h2 style="margin: 0 0 16px 0; color: #1a1a1a; font-size: 20px; line-height: 1.4;">有人在你的文章下发表了评论</h2>
             <p style="color: #555; font-size: 15px; margin-bottom: 24px; line-height: 1.6;">
-              <strong style="color: #007acc;">${commentAuthor}</strong> 评论了你的文章 <b style="color: #1a1a1a;">《${postTitle}》</b>：
+              <strong style="color: #007acc;">${htmlEscape(commentAuthor)}</strong> 评论了你的文章 <b style="color: #1a1a1a;">《${htmlEscape(postTitle)}》</b>：
             </p>
             <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; border: 1px dashed #e1e4e8; margin-bottom: 32px;">
               <div style="color: #444; font-size: 15px; line-height: 1.8; word-break: break-all;">
-                ${commentContent}
+                ${htmlEscape(commentContent)}
               </div>
             </div>
             <div style="text-align: center;">
-              <a href="${postUrl}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px; transition: all 0.3s ease;">
+              <a href="${htmlEscape(postUrl)}" style="display: inline-block; background-color: #007acc; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 15px; transition: all 0.3s ease;">
                 立即前往查看
               </a>
             </div>
@@ -213,7 +217,7 @@ export async function sendTestEmail(env: Bindings, toEmail: string): Promise<voi
     subject: `SMTP 配置验证`,
     html: `<div style="font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #e1e4e8; border-radius: 8px;">
       <h2 style="color: #333; margin-top: 0;">SMTP 配置测试</h2>
-      <p style="color: #555; line-height: 1.6;">这是一封来自 <strong>${siteName}</strong> 的测试邮件。</p>
+      <p style="color: #555; line-height: 1.6;">这是一封来自 <strong>${htmlEscape(siteName)}</strong> 的测试邮件。</p>
       <p style="color: #555; line-height: 1.6;">如果收到此邮件，说明 SMTP 配置正确，邮件通知功能可以正常使用。</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
       <p style="color: #999; font-size: 12px;">此邮件由系统自动发送，请勿直接回复。</p>

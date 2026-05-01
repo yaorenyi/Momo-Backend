@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
+  import DOMPurify from 'dompurify';
   import i18nit from '../i18n/translation';
   import { parseMarkdown, validateMarkdown } from '../utils/markdown';
   import { formatFullDate } from '../utils/time';
@@ -158,7 +159,7 @@
 
     <div class="text-[var(--text-color)] mt-1 leading-relaxed w-full max-w-full min-w-0 text-sm markdown-content">
       {#if c.contentHtml && typeof c.contentHtml === 'string' && isValidHtml(c.contentHtml)}
-        <div class="break-words w-full max-w-full">{@html c.contentHtml}</div>
+        <div class="break-words w-full max-w-full">{@html DOMPurify.sanitize(c.contentHtml)}</div>
       {:else if c.contentText && typeof c.contentText === 'string' && c.contentText.trim() !== ''}
         <p class="break-words whitespace-pre-wrap overflow-hidden w-full max-w-full min-w-0">
           {c.contentText}

@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 	_ "modernc.org/sqlite"
 )
 
@@ -19,17 +20,17 @@ var (
 )
 
 var allowedSettings = map[string]bool{
-	"site_name":           true,
-	"admin_email":         true,
-	"admin_name":          true,
-	"smtp_host":           true,
-	"smtp_port":           true,
-	"email_user":          true,
-	"email_password":      true,
-	"email_secure":        true,
-	"allow_origin":        true,
-	"email_enabled":       true,
-	"reply_template":      true,
+	"site_name":             true,
+	"admin_email":           true,
+	"admin_name":            true,
+	"smtp_host":             true,
+	"smtp_port":             true,
+	"email_user":            true,
+	"email_password":        true,
+	"email_secure":          true,
+	"allow_origin":          true,
+	"email_enabled":         true,
+	"reply_template":        true,
 	"notification_template": true,
 }
 
@@ -94,7 +95,20 @@ func CheckAdminCredentials(name, password string) bool {
 	dbPass := GetSetting("admin_password")
 
 	if dbName != "" && dbPass != "" {
-		return name == dbName && password == dbPass
+		// bcrypt hash 检测
+		if len(dbPass) > 0 && dbPass[0] == '$' {
+			err := bcrypt.CompareHashAndPassword([]byte(dbPass), []byte(password))
+			return err == nil
+		}
+		// 明文兼容 + 自动升级为 hash
+		if name == dbName && password == dbPass {
+			hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if err == nil {
+				SetSetting("admin_password", string(hashed))
+			}
+			return true
+		}
+		return false
 	}
 
 	cfgName := DefaultAdminName
@@ -104,10 +118,14 @@ func CheckAdminCredentials(name, password string) bool {
 }
 
 func ChangeAdminPassword(name, password string) error {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
 	if err := SetSetting("admin_name", name); err != nil {
 		return err
 	}
-	if err := SetSetting("admin_password", password); err != nil {
+	if err := SetSetting("admin_password", string(hashed)); err != nil {
 		return err
 	}
 	if err := SetSetting("password_changed", "true"); err != nil {

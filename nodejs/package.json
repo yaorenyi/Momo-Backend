@@ -24,6 +24,7 @@
     "ua-parser-js": "^2.0.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/koa": "^3.0.1",
     "@types/koa-static": "^4.0.4",
     "@types/koa__cors": "^5.0.1",

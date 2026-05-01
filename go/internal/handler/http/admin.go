@@ -197,7 +197,7 @@ func (h *CommentHandler) TestEmail(c *gin.Context) {
 		log.Printf("[ERROR] Test email failed: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    400,
-			"message": err.Error(),
+			"message": "邮件发送失败，请检查 SMTP 配置",
 		})
 		return
 	}

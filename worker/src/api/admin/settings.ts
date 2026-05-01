@@ -67,6 +67,6 @@ export const testEmail = async (c: Context<{ Bindings: Bindings }>) => {
     await sendTestEmail(c.env, adminEmail);
     return c.json({ code: 200, message: 'A test email has been sent' });
   } catch (e: any) {
-    return c.json({ code: 400, message: e.message || '邮件发送失败' }, 400);
+    return c.json({ code: 400, message: '邮件发送失败，请检查 SMTP 配置' }, 400);
   }
 };

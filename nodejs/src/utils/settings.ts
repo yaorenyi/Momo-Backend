@@ -1,4 +1,5 @@
 import { prisma } from "../orm/prisma";
+import { compare, hash, genSalt } from "bcryptjs";
 
 export const DEFAULT_ADMIN_NAME = "momo";
 export const DEFAULT_ADMIN_PASSWORD = "momo";
@@ -41,14 +42,27 @@ export async function checkAdminCredentials(name: string, password: string): Pro
   const dbPass = await getSetting("admin_password");
 
   if (dbName && dbPass) {
-    return name === dbName && password === dbPass;
+    // bcrypt hash 检测
+    if (dbPass.startsWith('$2')) {
+      return await compare(password, dbPass);
+    }
+    // 明文兼容 + 自动升级为 hash
+    if (name === dbName && password === dbPass) {
+      const salt = await genSalt(10);
+      const hashed = await hash(password, salt);
+      await setSetting("admin_password", hashed);
+      return true;
+    }
+    return false;
   }
 
   return name === DEFAULT_ADMIN_NAME && password === DEFAULT_ADMIN_PASSWORD;
 }
 
 export async function changeAdminPassword(name: string, password: string): Promise<void> {
+  const salt = await genSalt(10);
+  const hashed = await hash(password, salt);
   await setSetting("admin_name", name);
-  await setSetting("admin_password", password);
+  await setSetting("admin_password", hashed);
   await setSetting("password_changed", "true");
 }
