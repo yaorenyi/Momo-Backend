@@ -25,22 +25,39 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">新用户名</label>
             <input v-model="passwordForm.new_name" type="text" placeholder="留空则不修改"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              @input="validateForm"
+              :class="['w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors',
+                passwordForm.new_name && v.newName === 'valid' ? 'border-green-400 bg-green-50/30' : v.newName === 'valid' ? '' : v.newName === 'invalid' ? 'border-red-300 bg-red-50/30' : 'border-gray-300']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
             <input v-model="passwordForm.new_password" type="password" placeholder="留空则不修改" minlength="4"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              @input="validateForm"
+              :class="['w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors',
+                v.newPassword === 'valid' ? 'border-green-400 bg-green-50/30' : v.newPassword === 'invalid' ? 'border-red-300 bg-red-50/30' : 'border-gray-300']" />
+            <p v-if="v.newPassword === 'invalid'" class="mt-1 text-xs text-red-500 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation"></i> 密码长度不能少于 4 位
+            </p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
             <input v-model="passwordForm.confirm_password" type="password" placeholder="再次输入新密码"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              @input="validateForm"
+              :class="['w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors',
+                v.confirmPassword === 'valid' ? 'border-green-400 bg-green-50/30' : v.confirmPassword === 'invalid' ? 'border-red-300 bg-red-50/30' : 'border-gray-300']" />
+            <p v-if="v.confirmPassword === 'invalid'" class="mt-1 text-xs text-red-500 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation"></i> 两次输入的密码不一致
+            </p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">当前密码 <span class="text-red-500">*</span></label>
             <input v-model="passwordForm.old_password" type="password" placeholder="输入当前密码以确认修改"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              @input="validateForm"
+              :class="['w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors',
+                v.oldPassword === 'valid' ? 'border-green-400 bg-green-50/30' : v.oldPassword === 'invalid' ? 'border-red-300 bg-red-50/30' : 'border-gray-300']" />
+            <p v-if="v.oldPassword === 'invalid'" class="mt-1 text-xs text-red-500 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation"></i> 请输入当前密码
+            </p>
           </div>
         </div>
         <div class="mt-4 flex items-center gap-3">
@@ -79,6 +96,40 @@ const passwordForm = reactive({
   confirm_password: '',
 })
 
+// 实时校验状态
+const v = reactive({
+  newName: '',
+  newPassword: '',
+  confirmPassword: '',
+  oldPassword: '',
+})
+
+const validateForm = () => {
+  // 新用户名：只要不为空即有效
+  v.newName = passwordForm.new_name ? 'valid' : ''
+
+  // 新密码：如果填写了，必须 >= 4 位；没填则不校验
+  if (passwordForm.new_password) {
+    v.newPassword = passwordForm.new_password.length >= 4 ? 'valid' : 'invalid'
+  } else {
+    v.newPassword = ''
+  }
+
+  // 确认密码：如果新密码或确认密码有内容，才校验
+  if (passwordForm.new_password || passwordForm.confirm_password) {
+    if (!passwordForm.confirm_password) {
+      v.confirmPassword = 'invalid'
+    } else {
+      v.confirmPassword = passwordForm.new_password === passwordForm.confirm_password ? 'valid' : 'invalid'
+    }
+  } else {
+    v.confirmPassword = ''
+  }
+
+  // 当前密码：提交时判断，实时只显示是否为空
+  v.oldPassword = passwordForm.old_password ? 'valid' : ''
+}
+
 onMounted(async () => {
   try {
     const res = await request.get('/admin/settings')
@@ -91,7 +142,9 @@ onMounted(async () => {
 })
 
 const changePassword = async () => {
+  validateForm()
   if (!passwordForm.old_password) {
+    v.oldPassword = 'invalid'
     toast.warning('请输入当前密码')
     return
   }
@@ -100,10 +153,12 @@ const changePassword = async () => {
     return
   }
   if (passwordForm.new_password && passwordForm.new_password.length < 4) {
+    v.newPassword = 'invalid'
     toast.warning('密码长度不能少于4位')
     return
   }
   if (passwordForm.new_password !== passwordForm.confirm_password) {
+    v.confirmPassword = 'invalid'
     toast.warning('两次输入的密码不一致')
     return
   }

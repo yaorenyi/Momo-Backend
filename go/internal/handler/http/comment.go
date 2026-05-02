@@ -15,7 +15,8 @@ import (
 )
 
 type CommentHandler struct {
-	Repo repository.CommentRepository
+	Repo    repository.CommentRepository
+	Version string
 }
 
 // PostComment 提交评论 (POST /api/comments)

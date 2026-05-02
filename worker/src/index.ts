@@ -14,6 +14,8 @@ import { updateStatus } from './api/admin/updateStatus'
 import { statsOverview } from './api/admin/statsOverview'
 import { userList } from './api/admin/userList'
 import { userComments } from './api/admin/userComments'
+import { exportSettings, exportComments } from './api/admin/dataExport'
+import { importComments, importSettings } from './api/admin/dataImport'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -39,5 +41,9 @@ app.put('/admin/comments/status', updateStatus);
 app.get('/admin/stats/overview', statsOverview);
 app.get('/admin/stats/users', userList);
 app.get('/admin/stats/users/comments', userComments);
+app.get('/admin/data/export/settings', exportSettings);
+app.get('/admin/data/export/comments', exportComments);
+app.post('/admin/data/import/comments', importComments);
+app.post('/admin/data/import/settings', importSettings);
 
 export default app

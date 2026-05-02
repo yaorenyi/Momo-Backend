@@ -68,7 +68,7 @@ func main() {
 	// 4. 初始化 Settings 和 Repo
 	utils.InitSettingsDB(db)
 	repo := sqlite.NewCommentRepository(db)
-	handler := &h.CommentHandler{Repo: repo}
+	handler := &h.CommentHandler{Repo: repo, Version: Version}
 
 	// 5. 设置 Gin 引擎
 	r := gin.Default()

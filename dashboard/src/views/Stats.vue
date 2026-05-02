@@ -65,9 +65,21 @@
           <div ref="statusChartRef" style="height: 260px"></div>
         </div>
 
-        <!-- Recent 7 Days Trend -->
+        <!-- Trend Chart with Range Selector -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-          <h3 class="text-sm font-semibold text-gray-700 mb-4">最近 7 天评论趋势</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-gray-700">评论趋势</h3>
+            <div class="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+              <button v-for="opt in rangeOptions" :key="opt.value"
+                @click="switchRange(opt.value)"
+                :class="['px-3 py-1 text-xs rounded-md transition-all font-medium',
+                  selectedRange === opt.value
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700']">
+                {{ opt.label }}
+              </button>
+            </div>
+          </div>
           <div ref="trendChartRef" style="height: 260px"></div>
         </div>
       </div>
@@ -117,18 +129,27 @@
 import { ref, onMounted, nextTick, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { init, use } from 'echarts/core';
-import { PieChart, BarChart } from 'echarts/charts';
+import { PieChart, LineChart } from 'echarts/charts';
 import { TooltipComponent, GridComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import toast from '../utils/toast';
 import request from '../utils/request';
 import AdminLayout from '../components/AdminLayout.vue';
 
-use([PieChart, BarChart, TooltipComponent, GridComponent, CanvasRenderer]);
+use([PieChart, LineChart, TooltipComponent, GridComponent, CanvasRenderer]);
 
 const router = useRouter();
 const loading = ref(false);
 const apiUrl = ref(localStorage.getItem('apiUrl') || window.location.origin);
+const selectedRange = ref(7);
+
+const rangeOptions = [
+  { label: '7天', value: 7 },
+  { label: '14天', value: 14 },
+  { label: '1个月', value: 30 },
+  { label: '1年', value: 0 },
+];
+
 const stats = ref({
   totalComments: 0,
   totalUsers: 0,
@@ -142,10 +163,17 @@ const statusChartRef = ref(null);
 const trendChartRef = ref(null);
 let statusChart = null;
 let trendChart = null;
+
+const switchRange = async (range) => {
+  selectedRange.value = range;
+  await fetchStats(true);
+};
+
 const fetchStats = async (silent = false) => {
   if (!silent) loading.value = true;
   try {
-    const res = await request.get('/admin/stats/overview');
+    const range = selectedRange.value;
+    const res = await request.get(`/admin/stats/overview?range=${range}`);
     if (res.data) {
       stats.value = res.data;
     }
@@ -182,22 +210,55 @@ const initCharts = () => {
     });
   }
 
-  // Recent 7 days trend bar chart
+  // Trend line chart
   if (trendChartRef.value) {
     if (trendChart) trendChart.dispose();
     trendChart = init(trendChartRef.value);
-    const dates = stats.value.recentComments.map(d => d.date.slice(5));
+    const isMonthly = stats.value.recentComments.length > 0 && stats.value.recentComments[0].date.length === 7;
+    const dates = stats.value.recentComments.map(d => {
+      if (d.date.length === 7) {
+        const parts = d.date.split('-');
+        const month = parseInt(parts[1]);
+        if (month === 1) return `${parts[0].slice(2)}年`;
+        return `${month}月`;
+      }
+      return d.date.slice(5);
+    });
     const counts = stats.value.recentComments.map(d => d.count);
     trendChart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 11 } },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params) => {
+          const idx = params[0].dataIndex;
+          const raw = stats.value.recentComments[idx].date;
+          return `${raw}<br/>评论数: ${counts[idx]}`;
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: dates,
+        axisLabel: { fontSize: 11, rotate: dates.length > 14 ? 45 : 0 }
+      },
       yAxis: { type: 'value', minInterval: 1 },
-      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      grid: { left: 40, right: 20, top: 30, bottom: 40 },
       series: [{
-        type: 'bar',
+        type: 'line',
         data: counts,
-        itemStyle: { color: '#3b82f6', borderRadius: [4, 4, 0, 0] },
-        barMaxWidth: 40
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { color: '#3b82f6', width: 2 },
+        itemStyle: { color: '#3b82f6' },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59,130,246,0.25)' },
+              { offset: 1, color: 'rgba(59,130,246,0.02)' }
+            ]
+          }
+        }
       }]
     });
   }

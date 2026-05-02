@@ -9,6 +9,8 @@ import getUserList from "./admin/getUserList";
 import getUserComments from "./admin/getUserComments";
 import { getSettings, updateSettings, testEmail } from "./admin/settings";
 import changePassword from "./admin/password";
+import { importComments, importSettings } from "./admin/dataImport";
+import { exportSettings, exportComments } from "./admin/dataExport";
 
 export { getCommentBySlug, postComment };
-export { getAllComments, changeCommentStatus, login, getStatsOverview, getUserList, getUserComments, getSettings, updateSettings, changePassword, testEmail };
+export { getAllComments, changeCommentStatus, login, getStatsOverview, getUserList, getUserComments, getSettings, updateSettings, changePassword, testEmail, importComments, importSettings, exportSettings, exportComments };

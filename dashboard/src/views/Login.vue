@@ -71,9 +71,27 @@
         <h3 class="text-[#3b82f6] text-xl font-bold mb-1">安全保护</h3>
         <p class="text-gray-500 text-sm mb-6">为了您的账户安全，初次登录请更新您的凭据。</p>
         <form @submit.prevent="handleChangePassword" class="space-y-3">
-          <input v-model="passwordForm.new_name" type="text" placeholder="新用户名" required class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
-          <input v-model="passwordForm.new_password" type="password" placeholder="新密码" required minlength="4" class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
-          <input v-model="passwordForm.confirm_password" type="password" placeholder="确认新密码" required minlength="4" class="w-full px-4 py-3 bg-[#f0f5ff] border-none rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm text-gray-700" />
+          <div>
+            <input v-model="passwordForm.new_name" type="text" placeholder="新用户名" required @input="validatePwForm"
+              :class="['w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm',
+                pv.newName === 'valid' ? 'bg-green-50 border border-green-300' : 'bg-[#f0f5ff] border-none']" />
+          </div>
+          <div>
+            <input v-model="passwordForm.new_password" type="password" placeholder="新密码" required minlength="4" @input="validatePwForm"
+              :class="['w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm',
+                pv.newPassword === 'valid' ? 'bg-green-50 border border-green-300' : pv.newPassword === 'invalid' ? 'bg-red-50 border border-red-300' : 'bg-[#f0f5ff] border-none']" />
+            <p v-if="pv.newPassword === 'invalid'" class="mt-1 text-xs text-red-500 flex items-center gap-1 px-1">
+              <i class="fa-solid fa-circle-exclamation"></i> 密码长度不能少于 4 位
+            </p>
+          </div>
+          <div>
+            <input v-model="passwordForm.confirm_password" type="password" placeholder="确认新密码" required minlength="4" @input="validatePwForm"
+              :class="['w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm',
+                pv.confirmPassword === 'valid' ? 'bg-green-50 border border-green-300' : pv.confirmPassword === 'invalid' ? 'bg-red-50 border border-red-300' : 'bg-[#f0f5ff] border-none']" />
+            <p v-if="pv.confirmPassword === 'invalid'" class="mt-1 text-xs text-red-500 flex items-center gap-1 px-1">
+              <i class="fa-solid fa-circle-exclamation"></i> 两次输入的密码不一致
+            </p>
+          </div>
           <button type="submit" :disabled="changingPassword" class="w-full py-3 bg-[#e2efff] text-[#3b82f6] rounded-lg font-bold hover:bg-[#d4e6ff] transition-all disabled:opacity-50">
             {{ changingPassword ? '正在更新...' : '确认更新' }}
           </button>
@@ -85,7 +103,7 @@
 
 <script setup>
 /* 此处代码逻辑完全保持不变，确保您的功能正常运作 */
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '../utils/request'
 import toast from '../utils/toast'
@@ -107,17 +125,51 @@ const passwordForm = reactive({
   confirm_password: ''
 })
 
+// 实时校验状态
+const pv = reactive({
+  newName: '',
+  newPassword: '',
+  confirmPassword: '',
+})
+
+const validatePwForm = () => {
+  pv.newName = passwordForm.new_name ? 'valid' : ''
+  if (passwordForm.new_password) {
+    pv.newPassword = passwordForm.new_password.length >= 4 ? 'valid' : 'invalid'
+  } else {
+    pv.newPassword = ''
+  }
+  if (passwordForm.new_password || passwordForm.confirm_password) {
+    if (!passwordForm.confirm_password) {
+      pv.confirmPassword = 'invalid'
+    } else {
+      pv.confirmPassword = passwordForm.new_password === passwordForm.confirm_password ? 'valid' : 'invalid'
+    }
+  } else {
+    pv.confirmPassword = ''
+  }
+}
+
+const pwFormValid = computed(() => {
+  return passwordForm.new_name && passwordForm.new_password
+    && passwordForm.new_password.length >= 4
+    && passwordForm.new_password === passwordForm.confirm_password
+})
+
 const resetForm = () => {
   form.name = ''
   form.password = ''
 }
 
 const handleChangePassword = async () => {
+  validatePwForm()
   if (passwordForm.new_password !== passwordForm.confirm_password) {
+    pv.confirmPassword = 'invalid'
     toast.warning('两次输入的密码不一致')
     return
   }
   if (passwordForm.new_password.length < 4) {
+    pv.newPassword = 'invalid'
     toast.warning('密码长度不能少于4位')
     return
   }

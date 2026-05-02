@@ -4,6 +4,7 @@ import (
 	"context"
 	"momo-backend-go/internal/model"
 	"momo-backend-go/internal/repository"
+	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -141,8 +142,28 @@ func (r *commentRepo) List(ctx context.Context, offset, limit int, status string
 	return comments, total, err
 }
 
-func (r *commentRepo) GetStatsOverview(ctx context.Context) (*model.StatsOverview, error) {
+func (r *commentRepo) ListAll(ctx context.Context) ([]*model.Comment, error) {
+	var comments []*model.Comment
+	err := r.db.SelectContext(ctx, &comments, "SELECT * FROM Comment ORDER BY pub_date ASC")
+	return comments, err
+}
+
+func (r *commentRepo) GetStatsOverview(ctx context.Context, rangeParam string) (*model.StatsOverview, error) {
 	stats := &model.StatsOverview{}
+
+	var daysBack int
+	var isAll bool
+	switch rangeParam {
+	case "all", "0":
+		isAll = true
+		daysBack = 365
+	default:
+		if r, err := strconv.Atoi(rangeParam); err == nil && r > 0 {
+			daysBack = r - 1
+		} else {
+			daysBack = 6
+		}
+	}
 
 	// 1. 总评论数
 	_ = r.db.GetContext(ctx, &stats.TotalComments, "SELECT COUNT(*) FROM Comment")
@@ -170,33 +191,61 @@ func (r *commentRepo) GetStatsOverview(ctx context.Context) (*model.StatsOvervie
 		}
 	}
 
-	// 5. 最近 7 天评论趋势
-	dateCountMap := make(map[string]int64)
-	for i := 6; i >= 0; i-- {
-		d := time.Now().AddDate(0, 0, -i)
-		key := d.Format("2006-01-02")
-		dateCountMap[key] = 0
-	}
-	var recentRows []struct {
-		DateStr string `db:"date_str"`
-		Count   int64  `db:"count"`
-	}
-	sevenDaysAgo := time.Now().AddDate(0, 0, -6)
-	sevenDaysAgoStr := sevenDaysAgo.Format("2006-01-02")
-	_ = r.db.SelectContext(ctx, &recentRows, `
-		SELECT strftime('%Y-%m-%d', pub_date / 1000, 'unixepoch') as date_str, COUNT(*) as count
-		FROM Comment
-		WHERE date(pub_date / 1000, 'unixepoch') >= ?
-		GROUP BY date_str ORDER BY date_str ASC
-	`, sevenDaysAgoStr)
-
-	for _, row := range recentRows {
-		if _, ok := dateCountMap[row.DateStr]; ok {
-			dateCountMap[row.DateStr] = row.Count
+	if isAll {
+			// 最近 12 个月：按月聚合
+			monthlyMap := make(map[string]int64)
+			now := time.Now()
+			for i := 11; i >= 0; i-- {
+				d := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -i, 0)
+				key := d.Format("2006-01")
+				monthlyMap[key] = 0
+			}
+			twelveMonthsAgo := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -11, 0)
+			var monthlyRows []struct {
+				MonthStr string `db:"month_str"`
+				Count    int64  `db:"count"`
+			}
+			_ = r.db.SelectContext(ctx, &monthlyRows, `
+				SELECT strftime('%Y-%m', pub_date / 1000, 'unixepoch') as month_str, COUNT(*) as count
+				FROM Comment
+				WHERE pub_date >= ?
+				GROUP BY month_str ORDER BY month_str ASC
+			`, twelveMonthsAgo.UnixMilli())
+			for _, row := range monthlyRows {
+				if _, ok := monthlyMap[row.MonthStr]; ok {
+					monthlyMap[row.MonthStr] = row.Count
+				}
+			}
+			for _, d := range getMonthRange(11) {
+				stats.RecentComments = append(stats.RecentComments, model.DateCount{Date: d, Count: monthlyMap[d]})
+			}
+	} else {
+		dateCountMap := make(map[string]int64)
+		for i := daysBack; i >= 0; i-- {
+			d := time.Now().AddDate(0, 0, -i)
+			key := d.Format("2006-01-02")
+			dateCountMap[key] = 0
 		}
-	}
-	for _, d := range getDateRange(6) {
-		stats.RecentComments = append(stats.RecentComments, model.DateCount{Date: d, Count: dateCountMap[d]})
+		var recentRows []struct {
+			DateStr string `db:"date_str"`
+			Count   int64  `db:"count"`
+		}
+		startDateStr := time.Now().AddDate(0, 0, -daysBack).Format("2006-01-02")
+		_ = r.db.SelectContext(ctx, &recentRows, `
+			SELECT strftime('%Y-%m-%d', pub_date / 1000, 'unixepoch') as date_str, COUNT(*) as count
+			FROM Comment
+			WHERE date(pub_date / 1000, 'unixepoch') >= ?
+			GROUP BY date_str ORDER BY date_str ASC
+		`, startDateStr)
+
+		for _, row := range recentRows {
+			if _, ok := dateCountMap[row.DateStr]; ok {
+				dateCountMap[row.DateStr] = row.Count
+			}
+		}
+		for _, d := range getDateRange(daysBack) {
+			stats.RecentComments = append(stats.RecentComments, model.DateCount{Date: d, Count: dateCountMap[d]})
+		}
 	}
 
 	// 6. 热门评论者 Top 5
@@ -283,6 +332,16 @@ func getDateRange(daysBack int) []string {
 		dates = append(dates, d.Format("2006-01-02"))
 	}
 	return dates
+}
+
+func getMonthRange(monthsBack int) []string {
+	var months []string
+	now := time.Now()
+	for i := monthsBack; i >= 0; i-- {
+		d := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -i, 0)
+		months = append(months, d.Format("2006-01"))
+	}
+	return months
 }
 
 func (r *commentRepo) GetUserComments(ctx context.Context, author, email string, offset, limit int) ([]*model.AdminCommentResponse, int64, error) {

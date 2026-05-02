@@ -14,9 +14,11 @@ type CommentRepository interface {
 	Delete(ctx context.Context, id int64) error
 
 	// Stats methods
-	GetStatsOverview(ctx context.Context) (*model.StatsOverview, error)
+	GetStatsOverview(ctx context.Context, rangeParam string) (*model.StatsOverview, error)
 	GetUserList(ctx context.Context, offset, limit int) ([]*model.UserStats, int64, error)
 	GetUserComments(ctx context.Context, author, email string, offset, limit int) ([]*model.AdminCommentResponse, int64, error)
+	// Export
+	ListAll(ctx context.Context) ([]*model.Comment, error)
 	// Rate limiting
 	GetLastCommentByIP(ctx context.Context, ip string) (*model.Comment, error)
 }

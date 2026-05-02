@@ -12,7 +12,13 @@ export default async (ctx: koa.Context): Promise<void> => {
     return;
   }
 
-  const stats = await CommentService.getStatsOverview();
+  const rawRange = ctx.query.range as string | undefined;
+  let range = 7;
+  if (rawRange !== undefined && rawRange !== '') {
+    range = parseInt(rawRange);
+    if (isNaN(range)) range = 7;
+  }
+  const stats = await CommentService.getStatsOverview(range);
 
   ctx.body = {
     code: 200,

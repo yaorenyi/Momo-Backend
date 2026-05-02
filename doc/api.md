@@ -16,6 +16,10 @@
 | GET | `/admin/stats/overview` | 统计概览 |
 | GET | `/admin/stats/users` | 用户列表 |
 | GET | `/admin/stats/users/comments` | 用户的评论 |
+| GET | `/admin/data/export/comments` | 导出评论数据 |
+| GET | `/admin/data/export/settings` | 导出系统设置 |
+| POST | `/admin/data/import/comments` | 导入评论数据 |
+| POST | `/admin/data/import/settings` | 导入系统设置 |
 
 **接口说明**
 
@@ -443,9 +447,16 @@
 
 > 获取整体数据统计，包括评论数、用户数、状态分布、趋势等
 
-**查询参数**：无
+**查询参数**：
+- `range`：时间范围（可选，默认 7）
+  - `7` — 最近 7 天（逐日）
+  - `14` — 最近 14 天（逐日）
+  - `30` — 最近 30 天（逐日）
+  - `0` — 最近 12 个月（按月聚合）
 
 **响应（成功）**：
+`GET /admin/stats/overview?range=7`
+
 ```json
 {
   "code": 200,
@@ -471,6 +482,31 @@
     "topCommenters": [
       { "author": "张三", "email": "zhangsan@example.com", "count": 15, "lastCommentDate": "2026-04-27T10:00:00.000Z" },
       { "author": "李四", "email": "lisi@example.com", "count": 10, "lastCommentDate": "2026-04-26T08:00:00.000Z" }
+    ]
+  }
+}
+```
+
+`GET /admin/stats/overview?range=0`
+
+```json
+{
+  "code": 200,
+  "message": "Stats fetched successfully",
+  "data": {
+    "recentComments": [
+      { "date": "2025-06", "count": 12 },
+      { "date": "2025-07", "count": 8 },
+      { "date": "2025-08", "count": 15 },
+      { "date": "2025-09", "count": 0 },
+      { "date": "2025-10", "count": 22 },
+      { "date": "2025-11", "count": 18 },
+      { "date": "2025-12", "count": 5 },
+      { "date": "2026-01", "count": 10 },
+      { "date": "2026-02", "count": 7 },
+      { "date": "2026-03", "count": 14 },
+      { "date": "2026-04", "count": 9 },
+      { "date": "2026-05", "count": 3 }
     ]
   }
 }
@@ -564,6 +600,156 @@
 {
   "code": 400,
   "message": "author and email are required"
+}
+```
+
+---
+
+### 导出评论数据 (GET `/admin/data/export/comments`)
+
+> 导出所有评论为 JSON 格式，用于备份或迁移
+
+**查询参数**：无
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "Comments exported",
+  "data": {
+    "exportedAt": "2026-05-02T10:00:00.000Z",
+    "type": "comments",
+    "version": "1.0",
+    "total": 100,
+    "comments": [
+      {
+        "id": 1,
+        "pubDate": "2025-10-23T10:00:00.000Z",
+        "postSlug": "/posts/my-article",
+        "author": "张三",
+        "email": "zhangsan@example.com",
+        "url": "https://example.com",
+        "ipAddress": "192.168.1.1",
+        "os": "Windows 10",
+        "browser": "Chrome 96",
+        "contentText": "写得真好！",
+        "contentHtml": "<p>写得真好！</p>",
+        "parentId": null,
+        "status": "approved"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 导出系统设置 (GET `/admin/data/export/settings`)
+
+> 导出系统设置，含 `email_password`，不含 `admin_name`/`admin_password`
+
+**查询参数**：无
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "Settings exported",
+  "data": {
+    "exportedAt": "2026-05-02T10:00:00.000Z",
+    "type": "settings",
+    "version": "1.0",
+    "settings": {
+      "site_name": "Momo Blog",
+      "admin_email": "admin@example.com",
+      "smtp_host": "smtp.example.com",
+      "smtp_port": "465",
+      "email_user": "notify@example.com",
+      "email_password": "actual-password",
+      "email_secure": "true",
+      "allow_origin": "*",
+      "email_enabled": "true",
+      "reply_template": "...",
+      "notification_template": "..."
+    }
+  }
+}
+```
+
+---
+
+### 导入评论数据 (POST `/admin/data/import/comments`)
+
+> 导入之前导出的评论 JSON 文件数据
+
+**请求体**：
+```json
+{
+  "comments": [
+    {
+      "postSlug": "/posts/my-article",
+      "author": "张三",
+      "email": "zhangsan@example.com",
+      "contentText": "写得真好！",
+      "contentHtml": "<p>写得真好！</p>",
+      "pubDate": "2025-10-23T10:00:00.000Z",
+      "status": "approved"
+    }
+  ]
+}
+```
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "导入完成，成功 10 条，失败 0 条",
+  "data": {
+    "imported": 10
+  }
+}
+```
+
+**响应（部分失败）**：
+```json
+{
+  "code": 200,
+  "message": "导入完成，成功 8 条，失败 2 条",
+  "data": {
+    "imported": 8,
+    "errors": [
+      "第 3 条缺少必填字段",
+      "第 7 条导入失败: ..."
+    ]
+  }
+}
+```
+
+---
+
+### 导入系统设置 (POST `/admin/data/import/settings`)
+
+> 导入之前导出的系统设置 JSON 数据
+
+**请求体**：
+```json
+{
+  "site_name": "Momo Blog",
+  "smtp_host": "smtp.example.com",
+  "smtp_port": "465",
+  "email_user": "notify@example.com",
+  "email_password": "actual-password"
+}
+```
+
+**响应（成功）**：
+```json
+{
+  "code": 200,
+  "message": "设置导入完成，已更新 5 项",
+  "data": {
+    "updated": 5
+  }
 }
 ```
 

@@ -47,6 +47,12 @@ const routes = [
     name: 'AccountSettings',
     component: () => import('../views/AccountSettings.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings/data',
+    name: 'DataManagement',
+    component: () => import('../views/DataManagement.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

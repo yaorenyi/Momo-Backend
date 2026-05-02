@@ -14,7 +14,7 @@
       <div class="h-16 flex items-center justify-between px-6 border-b bg-gray-50 border-gray-200">
         <div class="flex items-center">
           <img src="../assets/logo.svg" class="w-8 h-8" alt="Logo" />
-          <span class="font-bold tracking-wide text-gray-800">管理后台</span>
+          <span class="ml-2 font-bold tracking-wide text-gray-800">管理后台</span>
         </div>
         <button @click="closeMobileMenu" class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-200">
           <i class="fa-solid fa-xmark text-lg text-gray-600"></i>
@@ -124,6 +124,7 @@ const pageTitle = computed(() => {
     '/settings': '系统设置',
     '/settings/site': '站点设置',
     '/settings/account': '账户安全',
+    '/settings/data': '数据管理',
   };
   const matched = Object.keys(map).find(path => route.path === path);
   return matched ? map[matched] : '管理后台';

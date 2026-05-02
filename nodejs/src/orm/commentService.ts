@@ -111,7 +111,7 @@ class CommentService {
     /*
     * 获取统计概览数据
     */
-    async getStatsOverview() {
+    async getStatsOverview(range: number = 7) {
         const totalComments = await CommentsModel.count();
 
         // 统计状态分布
@@ -143,31 +143,60 @@ class CommentService {
         });
         const totalUsers = rawUsers.length;
 
-        // 最近 7 天评论趋势（基于 UTC，避免时区偏移导致缺当天数据）
+        // 最近 N 天评论趋势（基于 UTC，避免时区偏移导致缺当天数据）
         const now = new Date();
-        const dayMap = new Map<string, number>();
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
-            dayMap.set(d.toISOString().slice(0, 10), 0);
-        }
+        const recentComments: { date: string; count: number }[] = [];
 
-        const sevenDaysAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6));
-
-        const recent = await CommentsModel.findMany({
-            where: {
-                pub_date: { gte: sevenDaysAgo }
-            },
-            select: { pub_date: true },
-            orderBy: { pub_date: 'asc' }
-        });
-
-        recent.forEach(c => {
-            const key = c.pub_date.toISOString().slice(0, 10);
-            if (dayMap.has(key)) {
-                dayMap.set(key, (dayMap.get(key) || 0) + 1);
+        if (range === 0) {
+            // 最近 12 个月：按月聚合
+            const monthlyMap = new Map<string, number>();
+            const twelveMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+            const allForTrend = await CommentsModel.findMany({
+                where: { pub_date: { gte: twelveMonthsAgo } },
+                select: { pub_date: true },
+                orderBy: { pub_date: 'asc' }
+            });
+            // 初始化最近 12 个月
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+                const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+                monthlyMap.set(key, 0);
             }
-        });
-        const recentComments = Array.from(dayMap.entries()).map(([date, count]) => ({ date, count }));
+            allForTrend.forEach(c => {
+                const key = `${c.pub_date.getUTCFullYear()}-${String(c.pub_date.getUTCMonth() + 1).padStart(2, '0')}`;
+                if (monthlyMap.has(key)) {
+                    monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);
+                }
+            });
+            Array.from(monthlyMap.entries()).forEach(([date, count]) => {
+                recentComments.push({ date, count });
+            });
+        } else {
+            const daysBack = range - 1;
+            const dayMap = new Map<string, number>();
+            for (let i = daysBack; i >= 0; i--) {
+                const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+                dayMap.set(d.toISOString().slice(0, 10), 0);
+            }
+
+            const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysBack));
+
+            const recent = await CommentsModel.findMany({
+                where: { pub_date: { gte: startDate } },
+                select: { pub_date: true },
+                orderBy: { pub_date: 'asc' }
+            });
+
+            recent.forEach(c => {
+                const key = c.pub_date.toISOString().slice(0, 10);
+                if (dayMap.has(key)) {
+                    dayMap.set(key, (dayMap.get(key) || 0) + 1);
+                }
+            });
+            Array.from(dayMap.entries()).forEach(([date, count]) => {
+                recentComments.push({ date, count });
+            });
+        }
 
         // 热门评论者 Top 5
         const commenterMap = new Map<string, { author: string; email: string; count: number; lastCommentDate: Date }>();

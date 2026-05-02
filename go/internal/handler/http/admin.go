@@ -353,7 +353,8 @@ func (h *CommentHandler) UpdateCommentStatus(c *gin.Context) {
 
 // GetStatsOverview 统计概览
 func (h *CommentHandler) GetStatsOverview(c *gin.Context) {
-	stats, err := h.Repo.GetStatsOverview(c.Request.Context())
+	rangeStr := c.DefaultQuery("range", "7")
+	stats, err := h.Repo.GetStatsOverview(c.Request.Context(), rangeStr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -451,5 +452,184 @@ func (h *CommentHandler) GetUserComments(c *gin.Context) {
 				"totalPage": totalPage,
 			},
 		},
+	})
+}
+
+// ExportSettings 导出系统设置（含 email_password，不含 admin_name/admin_password）
+func (h *CommentHandler) ExportSettings(c *gin.Context) {
+	all := utils.GetAllSettings()
+	filtered := make(map[string]string)
+	allowList := map[string]bool{
+		"site_name": true, "admin_email": true,
+		"smtp_host": true, "smtp_port": true, "email_user": true, "email_password": true, "email_secure": true,
+		"allow_origin": true, "email_enabled": true,
+		"reply_template": true, "notification_template": true,
+	}
+	for key := range allowList {
+		if val, ok := all[key]; ok {
+			filtered[key] = val
+		}
+	}
+	if _, ok := filtered["email_enabled"]; !ok {
+		filtered["email_enabled"] = "true"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Settings exported",
+		"data": gin.H{
+			"exportedAt": time.Now().UTC().Format("2006-01-02T15:04:05.000Z"),
+			"type":       "settings",
+			"version":    h.Version,
+			"settings":   filtered,
+		},
+	})
+}
+
+// ExportComments 导出评论数据
+func (h *CommentHandler) ExportComments(c *gin.Context) {
+	allComments, err := h.Repo.ListAll(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "Failed to export comments"})
+		return
+	}
+
+	resp := make([]model.AdminCommentResponse, 0)
+	for _, comm := range allComments {
+		resp = append(resp, model.AdminCommentResponse{
+			ID:          comm.ID,
+			PubDate:     time.UnixMilli(comm.PubDate).UTC().Format("2006-01-02T15:04:05.000Z"),
+			PostSlug:    comm.PostSlug,
+			Author:      comm.Author,
+			Email:       comm.Email,
+			URL:         comm.URL,
+			IPAddress:   comm.IPAddress,
+			OS:          comm.OS,
+			Browser:     comm.Browser,
+			ContentText: comm.ContentText,
+			ContentHtml: comm.ContentHTML,
+			Status:      comm.Status,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Comments exported",
+		"data": gin.H{
+			"exportedAt": time.Now().UTC().Format("2006-01-02T15:04:05.000Z"),
+			"type":       "comments",
+			"version":    h.Version,
+			"total":      len(resp),
+			"comments":   resp,
+		},
+	})
+}
+
+// ImportComments 导入评论数据
+func (h *CommentHandler) ImportComments(c *gin.Context) {
+	var body struct {
+		Comments []struct {
+			PostSlug    string  `json:"postSlug"`
+			Author      string  `json:"author"`
+			Email       string  `json:"email"`
+			URL         *string `json:"url"`
+			IPAddress   *string `json:"ipAddress"`
+			OS          *string `json:"os"`
+			Browser     *string `json:"browser"`
+			ContentText string  `json:"contentText"`
+			ContentHtml string  `json:"contentHtml"`
+			ParentID    *int64  `json:"parentId"`
+			Status      string  `json:"status"`
+			PubDate     string  `json:"pubDate"`
+		} `json:"comments"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || len(body.Comments) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求体须包含 comments 数组"})
+		return
+	}
+
+	imported := 0
+	var errors []string
+	for i, cData := range body.Comments {
+		if cData.PostSlug == "" || cData.Author == "" || cData.Email == "" || cData.ContentText == "" {
+			errors = append(errors, "第 "+strconv.Itoa(i+1)+" 条缺少必填字段")
+			continue
+		}
+		pubDate := time.Now().UnixMilli()
+		if cData.PubDate != "" {
+			if t, err := time.Parse("2006-01-02T15:04:05.000Z", cData.PubDate); err == nil {
+				pubDate = t.UnixMilli()
+			} else if t, err := time.Parse("2006-01-02T15:04:05Z", cData.PubDate); err == nil {
+				pubDate = t.UnixMilli()
+			}
+		}
+		comment := &model.Comment{
+			PostSlug:    cData.PostSlug,
+			Author:      cData.Author,
+			Email:       cData.Email,
+			URL:         cData.URL,
+			IPAddress:   cData.IPAddress,
+			OS:          cData.OS,
+			Browser:     cData.Browser,
+			ContentText: cData.ContentText,
+			ContentHTML: cData.ContentHtml,
+			ParentID:    cData.ParentID,
+			Status:      "approved",
+			PubDate:     pubDate,
+		}
+		if cData.Status != "" {
+			comment.Status = cData.Status
+		}
+		if err := h.Repo.Create(c.Request.Context(), comment); err != nil {
+			errors = append(errors, "第 "+strconv.Itoa(i+1)+" 条导入失败: "+err.Error())
+			continue
+		}
+		imported++
+	}
+
+	resp := gin.H{"imported": imported}
+	if len(errors) > 0 {
+		resp["errors"] = errors
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "导入完成，成功 " + strconv.Itoa(imported) + " 条" + func() string {
+			if len(errors) > 0 {
+				return "，失败 " + strconv.Itoa(len(errors)) + " 条"
+			}
+			return ""
+		}(),
+		"data": resp,
+	})
+}
+
+// ImportSettings 导入系统设置
+func (h *CommentHandler) ImportSettings(c *gin.Context) {
+	var body map[string]string
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请提供有效的设置数据"})
+		return
+	}
+
+	allowList := map[string]bool{
+		"site_name": true, "admin_email": true, "admin_name": true,
+		"smtp_host": true, "smtp_port": true, "email_user": true, "email_password": true, "email_secure": true,
+		"allow_origin": true, "email_enabled": true,
+		"reply_template": true, "notification_template": true,
+	}
+
+	updated := 0
+	for key, value := range body {
+		if allowList[key] && value != "" {
+			if err := utils.SetSetting(key, value); err == nil {
+				updated++
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "设置导入完成，已更新 " + strconv.Itoa(updated) + " 项",
+		"data":    gin.H{"updated": updated},
 	})
 }

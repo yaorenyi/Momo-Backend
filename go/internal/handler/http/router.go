@@ -60,6 +60,10 @@ func RegisterRoutes(r *gin.Engine, h *CommentHandler) {
 			auth.GET("/stats/overview", h.GetStatsOverview)
 			auth.GET("/stats/users", h.GetUserList)
 			auth.GET("/stats/users/comments", h.GetUserComments)
+			auth.GET("/data/export/settings", h.ExportSettings)
+			auth.GET("/data/export/comments", h.ExportComments)
+			auth.POST("/data/import/comments", h.ImportComments)
+			auth.POST("/data/import/settings", h.ImportSettings)
 		}
 	}
 }
